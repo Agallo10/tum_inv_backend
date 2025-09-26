@@ -53,6 +53,7 @@ type UsuarioResponsable struct {
 type Equipo struct {
 	gorm.Model
 	UsuarioResponsableID   *uint
+	EstadoEquipoID         uint `gorm:"not null"`
 	TipoDispositivo        string `gorm:"check:tipo_dispositivo IN ('Todo en Uno', 'Escritorio', 'Portátil', 'Impresora', 'Escáner', 'Otro')"`
 	PlacaInventario        string `gorm:"unique"`
 	Marca                  string `gorm:"not null"`
@@ -62,6 +63,7 @@ type Equipo struct {
 	ObservacionesGenerales string
 
 	// Relaciones
+	EstadoEquipo     EstadoEquipo      `gorm:"foreignKey:EstadoEquipoID"`
 	Perifericos      []Periferico      `gorm:"foreignKey:EquipoID"`
 	HardwareInterno  []HardwareInterno `gorm:"foreignKey:EquipoID"`
 	Software         []Software        `gorm:"foreignKey:EquipoID"`
@@ -186,6 +188,17 @@ type Repuesto struct {
 	Capacidad         string
 	Descripcion       string    `gorm:"not null"`
 	FechaUtilizacion  time.Time `gorm:"default:CURRENT_TIMESTAMP"`
+}
+
+// EstadoEquipo representa el estado actual del equipo
+type EstadoEquipo struct {
+	gorm.Model
+	Nombre      string `gorm:"unique;not null"`
+	Descripcion string `gorm:"not null"`
+	Activo      bool   `gorm:"default:true"`
+
+	// Relaciones
+	Equipos []Equipo `gorm:"foreignKey:EstadoEquipoID"`
 }
 
 // Funcionario representa al personal técnico

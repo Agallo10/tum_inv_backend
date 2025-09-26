@@ -30,6 +30,7 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB, cfg *config.Config) {
 	usuarioRepo := repositories.NewUsuarioRepository(db)
 	secretariaRepo := repositories.NewSecretariaRepository(db)
 	dependenciaRepo := repositories.NewDependenciaRepository(db)
+	estadoEquipoRepo := repositories.NewEstadoEquipoRepository(db)
 
 	// Servicios
 	equipoService := services.NewEquipoService(equipoRepo)
@@ -48,6 +49,7 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB, cfg *config.Config) {
 	authService := services.NewAuthService(usuarioRepo, cfg)
 	secretariaService := services.NewSecretariaService(secretariaRepo)
 	dependenciaService := services.NewDependenciaService(dependenciaRepo)
+	estadoEquipoService := services.NewEstadoEquipoService(estadoEquipoRepo)
 
 	// Controladores
 	equipoController := controllers.NewEquipoController(equipoService)
@@ -66,6 +68,7 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB, cfg *config.Config) {
 	authController := controllers.NewAuthController(authService)
 	secretariaController := controllers.NewSecretariaController(secretariaService)
 	dependenciaController := controllers.NewDependenciaController(dependenciaService)
+	estadoEquipoController := controllers.NewEstadoEquipoController(estadoEquipoService)
 
 	// Middleware
 	jwtMiddleware := middleware.NewJWTMiddleware(authService)
@@ -249,4 +252,15 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB, cfg *config.Config) {
 
 	// Ruta para obtener dependencias por secretaría
 	secretarias.GET("/:secretariaId/dependencias", dependenciaController.GetDependenciasBySecretaria)
+
+	// Rutas para Estados de Equipo
+	estadosEquipo := api.Group("/estados-equipo")
+	estadosEquipo.POST("", estadoEquipoController.CreateEstado)
+	estadosEquipo.GET("", estadoEquipoController.GetAllEstados)
+	estadosEquipo.GET("/activos", estadoEquipoController.GetActiveEstados)
+	estadosEquipo.GET("/:id", estadoEquipoController.GetEstadoByID)
+	estadosEquipo.PUT("/:id", estadoEquipoController.UpdateEstado)
+	estadosEquipo.DELETE("/:id", estadoEquipoController.DeleteEstado)
+	estadosEquipo.PATCH("/:id/toggle-activo", estadoEquipoController.ToggleActivo)
+	estadosEquipo.GET("/:id/equipos", estadoEquipoController.GetEquiposByEstado)
 }
