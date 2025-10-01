@@ -1,3 +1,5 @@
-/tmp
+tmp/
 .env
-.air.toml
+*.toml
+*.exe
+*.bin
