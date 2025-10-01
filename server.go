@@ -5,6 +5,7 @@ import (
 	"tum_inv_backend/internal/api/routes"
 	"tum_inv_backend/internal/infrastructure/config"
 	"tum_inv_backend/internal/infrastructure/database"
+	"tum_inv_backend/internal/infrastructure/seed"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -27,6 +28,12 @@ func main() {
 
 	// Conectar a la base de datos
 	database.ConnectDB(cfg)
+
+	// Ejecutar seeds (datos iniciales)
+	seeder := seed.NewSeeder(database.DB)
+	if err := seeder.SeedAll(); err != nil {
+		e.Logger.Fatal("Error ejecutando seeds: ", err)
+	}
 
 	// Configurar rutas usando la variable global DB y la configuración
 	routes.SetupRoutes(e, database.DB, cfg)
