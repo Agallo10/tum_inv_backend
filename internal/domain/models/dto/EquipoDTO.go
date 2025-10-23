@@ -12,4 +12,5 @@ type EquipoConResponsableDTO struct {
 	UbicacionOficina       string
 	FechaDiligenciamiento  string
 	TipoDispositivo        string
+	Estado                 string
 }

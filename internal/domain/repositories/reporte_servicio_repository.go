@@ -14,6 +14,7 @@ type ReporteServicioRepository interface {
 	Delete(id uint) error
 	FindAll() ([]models.ReporteServicio, error)
 	FindByEquipoID(equipoID uint) ([]models.ReporteServicio, error)
+	CreateReporteCompleto(reporte *models.ReporteServicio, tipoMantenimiento *models.TipoMantenimiento, repuestos []models.Repuesto, funcionarios []models.Funcionario) error
 }
 
 // reporteServicioRepository implementa ReporteServicioRepository
@@ -34,7 +35,7 @@ func (r *reporteServicioRepository) Create(reporte *models.ReporteServicio) erro
 // FindByID busca un reporte de servicio por su ID
 func (r *reporteServicioRepository) FindByID(id uint) (*models.ReporteServicio, error) {
 	var reporte models.ReporteServicio
-	err := r.db.Preload("TiposMantenimiento").Preload("Repuestos").Preload("Funcionarios").First(&reporte, id).Error
+	err := r.db.Preload("TipoMantenimiento").Preload("Repuestos").Preload("Funcionarios").First(&reporte, id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -54,13 +55,64 @@ func (r *reporteServicioRepository) Delete(id uint) error {
 // FindAll retorna todos los reportes de servicio
 func (r *reporteServicioRepository) FindAll() ([]models.ReporteServicio, error) {
 	var reportes []models.ReporteServicio
-	err := r.db.Preload("TiposMantenimiento").Preload("Repuestos").Preload("Funcionarios").Find(&reportes).Error
+	err := r.db.Preload("TipoMantenimiento").Preload("Repuestos").Preload("Funcionarios").Find(&reportes).Error
 	return reportes, err
 }
 
 // FindByEquipoID retorna todos los reportes de servicio asociados a un equipo
 func (r *reporteServicioRepository) FindByEquipoID(equipoID uint) ([]models.ReporteServicio, error) {
 	var reportes []models.ReporteServicio
-	err := r.db.Preload("TiposMantenimiento").Preload("Repuestos").Preload("Funcionarios").Where("equipo_id = ?", equipoID).Find(&reportes).Error
+	err := r.db.Preload("TipoMantenimiento").Preload("Repuestos").Preload("Funcionarios").Where("equipo_id = ?", equipoID).Find(&reportes).Error
 	return reportes, err
+}
+
+// CreateReporteCompleto crea un reporte completo con todas sus relaciones en una transacción
+func (r *reporteServicioRepository) CreateReporteCompleto(reporte *models.ReporteServicio, tipoMantenimiento *models.TipoMantenimiento, repuestos []models.Repuesto, funcionarios []models.Funcionario) error {
+	// Iniciar transacción
+	tx := r.db.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	// Función para hacer rollback en caso de error
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// 1. Crear el reporte principal
+	if err := tx.Create(reporte).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// 2. Crear el tipo de mantenimiento
+	tipoMantenimiento.ReporteID = reporte.ID
+	if err := tx.Create(tipoMantenimiento).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// 3. Crear los repuestos (si los hay)
+	if len(repuestos) > 0 {
+		for i := range repuestos {
+			repuestos[i].ReporteID = &reporte.ID
+			if err := tx.Create(&repuestos[i]).Error; err != nil {
+				tx.Rollback()
+				return err
+			}
+		}
+	}
+
+	// 4. Asociar funcionarios al reporte
+	if len(funcionarios) > 0 {
+		if err := tx.Model(reporte).Association("Funcionarios").Append(funcionarios); err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	// Confirmar transacción
+	return tx.Commit().Error
 }

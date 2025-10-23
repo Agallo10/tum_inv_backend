@@ -97,10 +97,11 @@ func (r *equipoRepository) FindEquiUsuDepByID(equipoID uint) (dto.EquipoConRespo
 	err := r.db.Raw(`
         SELECT e.marca, e.modelo, e.observaciones_generales, 
 		e.placa_inventario, e.serial, e.tipo_dispositivo, e.fecha_diligenciamiento,
-		ur.nombres_apellidos, ur.cedula, d.ubicacion_oficina  
+		ur.nombres_apellidos, ur.cedula, d.ubicacion_oficina, es.nombre as Estado
         FROM equipos e 
         JOIN usuario_responsables ur ON ur.id = e.usuario_responsable_id
         JOIN dependencia d ON d.id = ur.dependencia_id
+        JOIN estado_equipos es ON es.id = e.estado_equipo_id
         WHERE e.id = ?`, equipoID).Scan(&equipo).Error
 	return equipo, err
 }

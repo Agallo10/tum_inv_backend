@@ -53,7 +53,7 @@ type UsuarioResponsable struct {
 type Equipo struct {
 	gorm.Model
 	UsuarioResponsableID   *uint
-	EstadoEquipoID         uint `gorm:"not null"`
+	EstadoEquipoID         uint   `gorm:"not null"`
 	TipoDispositivo        string `gorm:"check:tipo_dispositivo IN ('Todo en Uno', 'Escritorio', 'Portátil', 'Impresora', 'Escáner', 'Otro')"`
 	PlacaInventario        string `gorm:"unique"`
 	Marca                  string `gorm:"not null"`
@@ -158,9 +158,9 @@ type ReporteServicio struct {
 	Observaciones      string
 
 	// Relaciones
-	TiposMantenimiento []TipoMantenimiento `gorm:"foreignKey:ReporteID"`
-	Repuestos          []Repuesto          `gorm:"foreignKey:ReporteID"`
-	Funcionarios       []Funcionario       `gorm:"many2many:reportes_funcionarios;"`
+	TipoMantenimiento TipoMantenimiento `gorm:"foreignKey:ReporteID"`
+	Repuestos         []Repuesto        `gorm:"foreignKey:ReporteID"`
+	Funcionarios      []Funcionario     `gorm:"many2many:reportes_funcionarios;"`
 }
 
 // TipoMantenimiento representa el tipo de mantenimiento realizado

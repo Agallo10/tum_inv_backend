@@ -42,7 +42,7 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB, cfg *config.Config) {
 	usuarioSistemaService := services.NewUsuarioSistemaService(usuarioSistemaRepo)
 	accesoRemotoService := services.NewAccesoRemotoService(accesoRemotoRepo)
 	backupService := services.NewBackupService(backupRepo)
-	reporteServicioService := services.NewReporteServicioService(reporteServicioRepo)
+	reporteServicioService := services.NewReporteServicioService(reporteServicioRepo, funcionarioRepo)
 	tipoMantenimientoService := services.NewTipoMantenimientoService(tipoMantenimientoRepo)
 	repuestoService := services.NewRepuestoService(repuestoRepo)
 	funcionarioService := services.NewFuncionarioService(funcionarioRepo)
@@ -189,6 +189,7 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB, cfg *config.Config) {
 	// Rutas para Reportes de Servicio
 	reportesServicio := api.Group("/reportes-servicio")
 	reportesServicio.POST("", reporteServicioController.CreateReporteServicio)
+	reportesServicio.POST("/completo", reporteServicioController.CrearReporteConTipo)
 	reportesServicio.GET("", reporteServicioController.GetAllReportesServicio)
 	reportesServicio.GET("/:id", reporteServicioController.GetReporteServicio)
 	reportesServicio.PUT("/:id", reporteServicioController.UpdateReporteServicio)

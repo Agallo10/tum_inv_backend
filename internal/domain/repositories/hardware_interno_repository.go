@@ -61,6 +61,6 @@ func (r *hardwareInternoRepository) FindAll() ([]models.HardwareInterno, error) 
 // FindByEquipoID retorna todos los componentes de hardware interno asociados a un equipo
 func (r *hardwareInternoRepository) FindByEquipoID(equipoID uint) ([]models.HardwareInterno, error) {
 	var hardwareInternos []models.HardwareInterno
-	err := r.db.Where("equipo_id = ?", equipoID).First(&hardwareInternos).Error
+	err := r.db.Where("equipo_id = ?", equipoID).Find(&hardwareInternos).Error
 	return hardwareInternos, err
 }

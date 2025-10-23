@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 	"tum_inv_backend/internal/domain/models"
+	"tum_inv_backend/internal/domain/models/dto"
 	"tum_inv_backend/internal/domain/services"
 
 	"github.com/labstack/echo/v4"
@@ -107,4 +108,80 @@ func (c *ReporteServicioController) GetReportesServicioByEquipo(ctx echo.Context
 	}
 
 	return ctx.JSON(http.StatusOK, reportes)
+}
+
+// CrearReporteConTipo crea un reporte de servicio completo con tipos de mantenimiento, repuestos y funcionarios
+func (c *ReporteServicioController) CrearReporteConTipo(ctx echo.Context) error {
+	reporteData := new(dto.CrearReporteCompletoDTO)
+	if err := ctx.Bind(reporteData); err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Datos inválidos: " + err.Error(),
+		})
+	}
+
+	// Validar que los campos requeridos estén presentes
+	if reporteData.Dependencia == "" {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"error": "La dependencia es obligatoria",
+		})
+	}
+	if reporteData.Ubicacion == "" {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"error": "La ubicación es obligatoria",
+		})
+	}
+	if reporteData.ActividadRealizada == "" {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"error": "La actividad realizada es obligatoria",
+		})
+	}
+	if len(reporteData.TipoMantenimiento.Tipo) == 0 {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Debe especificar el tipo de mantenimiento",
+		})
+	}
+	if len(reporteData.FuncionarioIDs) == 0 {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Debe especificar al menos un funcionario",
+		})
+	}
+
+	// Validar tipo de mantenimiento
+	if reporteData.TipoMantenimiento.Tipo != "PREVENTIVO" && reporteData.TipoMantenimiento.Tipo != "CORRECTIVO" {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"error": "El tipo de mantenimiento debe ser 'PREVENTIVO' o 'CORRECTIVO'",
+		})
+	}
+
+	// Validar repuestos (si existen)
+	for i, repuesto := range reporteData.Repuestos {
+		if repuesto.Cantidad <= 0 {
+			return ctx.JSON(http.StatusBadRequest, map[string]string{
+				"error": "La cantidad del repuesto en la posición " + strconv.Itoa(i) + " debe ser mayor a 0",
+			})
+		}
+		if repuesto.SerialNumeroParte == "" {
+			return ctx.JSON(http.StatusBadRequest, map[string]string{
+				"error": "El serial/número de parte del repuesto en la posición " + strconv.Itoa(i) + " es obligatorio",
+			})
+		}
+		if repuesto.Descripcion == "" {
+			return ctx.JSON(http.StatusBadRequest, map[string]string{
+				"error": "La descripción del repuesto en la posición " + strconv.Itoa(i) + " es obligatoria",
+			})
+		}
+	}
+
+	// Crear el reporte completo
+	reporte, err := c.reporteService.CrearReporteConTipo(reporteData)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{
+			"error": err.Error(),
+		})
+	}
+
+	return ctx.JSON(http.StatusCreated, map[string]interface{}{
+		"message": "Reporte creado exitosamente",
+		"reporte": reporte,
+	})
 }
