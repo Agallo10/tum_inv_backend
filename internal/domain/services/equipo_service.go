@@ -16,6 +16,7 @@ type EquipoService interface {
 	GetAllEquipos() ([]models.Equipo, error)
 	GetEquiposByDependenciaID(dependenciaID uint) ([]models.Equipo, error)
 	GetEquipoUsuDepByID(equipoID uint) (dto.EquipoConResponsableDTO, error)
+	GetAllEquiposDetalle() ([]dto.EquipoConResponsableDTO, error)
 }
 
 // equipoService implementa EquipoService
@@ -77,4 +78,8 @@ func (s *equipoService) GetEquiposByDependenciaID(dependenciaID uint) ([]models.
 func (s *equipoService) GetEquipoUsuDepByID(equipoID uint) (dto.EquipoConResponsableDTO, error) {
 
 	return s.equipoRepo.FindEquiUsuDepByID(equipoID)
+}
+
+func (s *equipoService) GetAllEquiposDetalle() ([]dto.EquipoConResponsableDTO, error) {
+	return s.equipoRepo.FindAllEquiposDetalle()
 }

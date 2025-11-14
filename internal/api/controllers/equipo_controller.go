@@ -125,3 +125,13 @@ func (c *EquipoController) GetEquipoUsuDepByID(ctx echo.Context) error {
 
 	return ctx.JSON(http.StatusOK, equipo)
 }
+
+// GetAllEquipos obtiene todos los equipos con detalle
+func (c *EquipoController) GetAllEquiposDetalle(ctx echo.Context) error {
+	equipos, err := c.equipoService.GetAllEquiposDetalle()
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	return ctx.JSON(http.StatusOK, equipos)
+}

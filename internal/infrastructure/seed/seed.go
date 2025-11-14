@@ -22,6 +22,10 @@ func (s *Seeder) SeedAll() error {
 	log.Println("Iniciando proceso de seeding...")
 
 	// Ejecutar seeds en orden de dependencias
+	if err := s.SeedUsuarios(); err != nil {
+		return err
+	}
+
 	if err := s.SeedSecretarias(); err != nil {
 		return err
 	}
@@ -51,10 +55,17 @@ func (s *Seeder) SeedSecretarias() error {
 			Telefono:    "",
 		},
 		{
+			Nombre:      "Secretaría de General",
+			Descripcion: "Secretaría encargada de contratación",
+			Ubicacion:   "Alcaldía, Edificio Central - Piso 3",
+			Secretario:  "Marcos Castillo",
+			Telefono:    "",
+		},
+		{
 			Nombre:      "Secretaría de Salud",
 			Descripcion: "Secretaría responsable de la gestión de servicios de salud pública municipal",
 			Ubicacion:   "Centro Administrativo - Piso 2",
-			Secretario:  "Dr. Carlos Alberto Hernández",
+			Secretario:  "Maricel Rodriguez Ortega",
 			Telefono:    "123-456-7891",
 		},
 		{
@@ -222,6 +233,117 @@ func (s *Seeder) SeedDependencias() error {
 			CorreoInstitucional: "innovacion.digital@tecnologia.municipio.gov.co",
 			Telefono:            "123-456-7842",
 		},
+
+		// Dependencias de Secretaria General
+
+		{
+			SecretariaNombre:    "Secretaría de General",
+			Nombre:              "Talento Humano",
+			Descripcion:         "Dependencia encargada de las funciones relacionadas con talento humano",
+			UbicacionOficina:    "",
+			JefeOficina:         "Jehyms Silva Vallecilla",
+			CorreoInstitucional: "talentohumano@tumaco-narino.gov.co",
+			Telefono:            "3183653577",
+		},
+		{
+			SecretariaNombre:    "Secretaría de General",
+			Nombre:              "Contratación",
+			Descripcion:         "Dependencia encargada de las funciones relacionadas con contratación",
+			UbicacionOficina:    "",
+			JefeOficina:         "Javier Mayolo",
+			CorreoInstitucional: "juridica@tumaco-narino.gov.co",
+			Telefono:            "3188603186",
+		},
+		{
+			SecretariaNombre:    "Secretaría de General",
+			Nombre:              "Archivo Central",
+			Descripcion:         "Dependencia encargada de las funciones relacionadas con archivo central",
+			UbicacionOficina:    "",
+			JefeOficina:         "Víctor Hugo Holguín",
+			CorreoInstitucional: "victorhholguin@hotmail.com",
+			Telefono:            "3147186598",
+		},
+		{
+			SecretariaNombre:    "Secretaría de General",
+			Nombre:              "Sistemas",
+			Descripcion:         "Dependencia encargada de las funciones relacionadas con sistemas",
+			UbicacionOficina:    "",
+			JefeOficina:         "Francisco Rodríguez",
+			CorreoInstitucional: "oficinadesistema@tumaco-narino.gov.co",
+			Telefono:            "3208371910",
+		},
+		{
+			SecretariaNombre:    "Secretaría de General",
+			Nombre:              "CIS",
+			Descripcion:         "Dependencia encargada de las funciones relacionadas con cis",
+			UbicacionOficina:    "",
+			JefeOficina:         "Jorge Torres",
+			CorreoInstitucional: "jorgetorres201800@gmail.com",
+			Telefono:            "3102366002",
+		},
+		{
+			SecretariaNombre:    "Secretaría de General",
+			Nombre:              "Gestión Documental",
+			Descripcion:         "Dependencia encargada de las funciones relacionadas con gestión documental",
+			UbicacionOficina:    "",
+			JefeOficina:         "Dolores Castillo",
+			CorreoInstitucional: "gestiondocumental@tumaco-narino.gov.co",
+			Telefono:            "3137540974",
+		},
+		{
+			SecretariaNombre:    "Secretaría de General",
+			Nombre:              "Almacén",
+			Descripcion:         "Dependencia encargada de las funciones relacionadas con almacén",
+			UbicacionOficina:    "",
+			JefeOficina:         "Holger Burbano",
+			CorreoInstitucional: "almacen@tumaco-narino.gov.co",
+			Telefono:            "3153812112",
+		},
+		{
+			SecretariaNombre:    "Secretaría de General",
+			Nombre:              "Atención al Ciudadano",
+			Descripcion:         "Dependencia encargada de las funciones relacionadas con atención al ciudadano",
+			UbicacionOficina:    "",
+			JefeOficina:         "Milton Quiñonez",
+			CorreoInstitucional: "atencionalciudadano@tumaco-narino.gov.co",
+			Telefono:            "3153812112",
+		},
+		{
+			SecretariaNombre:    "Secretaría de General",
+			Nombre:              "Seguridad y Salud en el Trabajo",
+			Descripcion:         "Dependencia encargada de las funciones relacionadas con seguridad y salud en el trabajo",
+			UbicacionOficina:    "",
+			JefeOficina:         "Kleiver Vidal",
+			CorreoInstitucional: "sstumaco2020@gmail.com",
+			Telefono:            "3105120462",
+		},
+		{
+			SecretariaNombre:    "Secretaría de General",
+			Nombre:              "Prensa",
+			Descripcion:         "Dependencia encargada de las funciones relacionadas con prensa",
+			UbicacionOficina:    "",
+			JefeOficina:         "Jesús Enrique",
+			CorreoInstitucional: "comunicaciones@tumaco-narino.gov.co",
+			Telefono:            "3007076578",
+		},
+		{
+			SecretariaNombre:    "Secretaría de General",
+			Nombre:              "Control Interno",
+			Descripcion:         "Dependencia encargada de las funciones relacionadas con control interno",
+			UbicacionOficina:    "",
+			JefeOficina:         "Jerson Valencia",
+			CorreoInstitucional: "",
+			Telefono:            "",
+		},
+		{
+			SecretariaNombre:    "Secretaría de General",
+			Nombre:              "Gestión del Riesgo de Desastres",
+			Descripcion:         "Dependencia encargada de las funciones relacionadas con gestión del riesgo de desastres",
+			UbicacionOficina:    "",
+			JefeOficina:         "Luz Mirian Quiñones",
+			CorreoInstitucional: "",
+			Telefono:            "",
+		},
 	}
 
 	for _, dep := range dependencias {
@@ -310,6 +432,59 @@ func (s *Seeder) SeedEstadosEquipo() error {
 			}
 		} else {
 			log.Printf("Estado de equipo '%s' ya existe, omitiendo...", estado.Nombre)
+		}
+	}
+
+	return nil
+}
+
+// SeedUsuarios inserta los usuarios iniciales del sistema
+func (s *Seeder) SeedUsuarios() error {
+	log.Println("Insertando usuarios iniciales...")
+
+	usuarios := []models.Usuario{
+		{
+			Nombre:   "Administrador",
+			Apellido: "Sistema",
+			Email:    "admin@municipio.gov.co",
+			Username: "admin",
+			Password: "admin123", // Se hasheará antes de guardar
+			Rol:      "admin",
+			Activo:   true,
+		},
+		{
+			Nombre:   "Técnico",
+			Apellido: "Soporte",
+			Email:    "tecnico@municipio.gov.co",
+			Username: "tecnico",
+			Password: "tecnico123", // Se hasheará antes de guardar
+			Rol:      "tecnico",
+			Activo:   true,
+		},
+	}
+
+	for _, usuario := range usuarios {
+		// Verificar si ya existe el usuario
+		var existing models.Usuario
+		if err := s.DB.Where("username = ?", usuario.Username).First(&existing).Error; err != nil {
+			if err == gorm.ErrRecordNotFound {
+				// Hashear la contraseña antes de guardar
+				if err := usuario.HashPassword(); err != nil {
+					log.Printf("Error al hashear contraseña para usuario %s: %v", usuario.Username, err)
+					return err
+				}
+
+				// No existe, crear nuevo
+				if err := s.DB.Create(&usuario).Error; err != nil {
+					log.Printf("Error al crear usuario %s: %v", usuario.Username, err)
+					return err
+				}
+				log.Printf("Usuario '%s' con rol '%s' creado exitosamente", usuario.Username, usuario.Rol)
+			} else {
+				return err
+			}
+		} else {
+			log.Printf("Usuario '%s' ya existe, omitiendo...", usuario.Username)
 		}
 	}
 

@@ -89,6 +89,7 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB, cfg *config.Config) {
 	equipos := api.Group("/equipos")
 	equipos.POST("", equipoController.CreateEquipo)
 	equipos.GET("", equipoController.GetAllEquipos)
+	equipos.GET("/AllDetalle", equipoController.GetAllEquiposDetalle)
 	equipos.GET("/:id", equipoController.GetEquipo)
 	equipos.PUT("/:id", equipoController.UpdateEquipo)
 	equipos.DELETE("/:id", equipoController.DeleteEquipo)
