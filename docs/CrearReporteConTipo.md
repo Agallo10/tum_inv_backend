@@ -2,7 +2,7 @@
 
 ## Descripción
 
-La función `CrearReporteConTipo` permite crear un reporte de servicio completo con todas sus relaciones asociadas (tipos de mantenimiento, repuestos y funcionarios) en una sola operación transaccional.
+La función `CrearReporteConTipo` permite crear un reporte de servicio completo con todas sus relaciones asociadas (tipos de mantenimiento y repuestos) en una sola operación transaccional.
 
 ## Endpoint HTTP
 
@@ -16,6 +16,7 @@ POST /api/reportes-servicio/completo
 
 ```json
 {
+  "creado_por_id": 2,
   "equipo_id": 1,
   "fecha_inicio": "2024-10-08T09:00:00Z",
   "fecha_finalizacion": "2024-10-08T17:00:00Z",
@@ -44,8 +45,7 @@ POST /api/reportes-servicio/completo
       "descripcion": "Memoria RAM DDR4 8GB 2666MHz",
       "fecha_utilizacion": "2024-10-08T10:30:00Z"
     }
-  ],
-  "funcionario_ids": [1, 2]
+  ]
 }
 ```
 
@@ -53,6 +53,8 @@ POST /api/reportes-servicio/completo
 
 ### Reporte Principal:
 
+- `creado_por_id` (uint): ID del usuario del sistema que crea el reporte
+- `equipo_id` (uint): ID del equipo asociado al reporte (obligatorio)
 - `fecha_inicio` (datetime): Fecha y hora de inicio del servicio
 - `dependencia` (string): Nombre de la dependencia
 - `ubicacion` (string): Ubicación donde se realizó el servicio
@@ -62,11 +64,6 @@ POST /api/reportes-servicio/completo
 
 - Un tipo de mantenimiento debe ser especificado
 - `tipo` (string): Debe ser "PREVENTIVO" o "CORRECTIVO"
-
-### Funcionarios:
-
-- Al menos un funcionario debe ser especificado
-- `funcionario_ids` (array): Array de IDs de funcionarios existentes
 
 ### Repuestos (opcionales):
 
@@ -88,6 +85,7 @@ Si se especifican repuestos, cada uno debe tener:
     "CreatedAt": "2024-10-08T15:30:00Z",
     "UpdatedAt": "2024-10-08T15:30:00Z",
     "DeletedAt": null,
+    "creado_por_id": 2,
     "equipo_id": 1,
     "fecha_inicio": "2024-10-08T09:00:00Z",
     "fecha_finalizacion": "2024-10-08T17:00:00Z",
@@ -96,6 +94,25 @@ Si se especifican repuestos, cada uno debe tener:
     "diagnostico_falla": "Computador presenta lentitud y errores de aplicación",
     "actividad_realizada": "Mantenimiento preventivo completo del equipo",
     "observaciones": "Se realizó limpieza física y actualización de software",
+    "CreadoPor": {
+      "ID": 2,
+      "nombre": "Técnico",
+      "apellido": "Soporte",
+      "username": "tecnico",
+      "rol": "tecnico"
+    },
+    "Equipo": {
+      "ID": 1,
+      "placa_inventario": "PC-001",
+      "marca": "Dell",
+      "serial": "ABC123",
+      "UsuarioResponsable": {
+        "ID": 1,
+        "nombres_apellidos": "Juan Carlos Pérez García",
+        "cedula": "12345678",
+        "tipo_vinculacion": "Planta"
+      }
+    },
     "TipoMantenimiento": {
       "ID": 1,
       "ReporteID": 1,
@@ -119,24 +136,6 @@ Si se especifican repuestos, cada uno debe tener:
         "capacidad": "8GB",
         "descripcion": "Memoria RAM DDR4 8GB 2666MHz",
         "fecha_utilizacion": "2024-10-08T10:30:00Z"
-      }
-    ],
-    "Funcionarios": [
-      {
-        "ID": 1,
-        "nombre": "Juan Carlos Pérez",
-        "cargo": "Técnico en Sistemas",
-        "cedula": "12345678",
-        "tipo": "FUNCIONARIO",
-        "area": "SISTEMAS"
-      },
-      {
-        "ID": 2,
-        "nombre": "María Elena Rodríguez",
-        "cargo": "Ingeniera de Soporte",
-        "cedula": "87654321",
-        "tipo": "FUNCIONARIO",
-        "area": "SISTEMAS"
       }
     ]
   }
@@ -165,15 +164,18 @@ Si se especifican repuestos, cada uno debe tener:
 
 1. **Transaccional**: Toda la operación se ejecuta en una transacción. Si alguna parte falla, se hace rollback completo.
 
-2. **Validaciones**: Se valida la existencia de funcionarios y el tipo de mantenimiento antes de crear el reporte.
+2. **Validaciones**: Se valida el tipo de mantenimiento y el equipo antes de crear el reporte.
 
-3. **Relaciones**: Maneja automáticamente las relaciones one-to-one (tipo de mantenimiento), one-to-many (repuestos) y many-to-many (funcionarios).
+3. **Relaciones**: Maneja automáticamente las relaciones:
+   - one-to-one: tipo de mantenimiento
+   - one-to-many: repuestos
+   - many-to-one: creado por (Usuario), equipo (con su usuario responsable)
 
 4. **Atomicidad**: O se crea todo correctamente o no se crea nada.
 
 5. **Separación de Responsabilidades**: La lógica de base de datos está en el repositorio, las validaciones de negocio en el servicio.
 
-6. **Respuesta Completa**: Devuelve el reporte completo con todas sus relaciones cargadas.
+6. **Respuesta Completa**: Devuelve el reporte completo con todas sus relaciones cargadas, incluyendo el equipo y su usuario responsable.
 
 ## Uso desde el Código
 
@@ -195,8 +197,10 @@ fmt.Printf("Reporte ID: %d creado exitosamente\n", reporte.ID)
 
 ## Notas Importantes
 
-- Los funcionarios deben existir previamente en la base de datos
+- El usuario que crea el reporte (`creado_por_id`) debe existir en la base de datos
+- El equipo (`equipo_id`) es obligatorio y debe existir
+- El usuario responsable se obtiene automáticamente del equipo asociado
 - Si no se especifican repuestos, el array puede estar vacío
-- Los tipos de mantenimiento son obligatorios (mínimo 1)
+- El tipo de mantenimiento es obligatorio
 - Todas las fechas deben estar en formato RFC3339 (ISO 8601)
 - La función es thread-safe gracias al uso de transacciones de base de datos

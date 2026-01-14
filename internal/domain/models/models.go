@@ -45,8 +45,8 @@ type UsuarioResponsable struct {
 	TipoVinculacion  string `gorm:"check:tipo_vinculacion IN ('Planta', 'Contratista', 'Otro')"`
 	Celular          string
 
-	// Relaciones
-	Equipo Equipo `gorm:"foreignKey:UsuarioResponsableID"`
+	// Relaciones - El usuario puede tener múltiples equipos asignados
+	Equipos []Equipo `gorm:"foreignKey:UsuarioResponsableID"`
 }
 
 // Equipo representa un dispositivo tecnológico
@@ -63,15 +63,16 @@ type Equipo struct {
 	ObservacionesGenerales string
 
 	// Relaciones
-	EstadoEquipo     EstadoEquipo      `gorm:"foreignKey:EstadoEquipoID"`
-	Perifericos      []Periferico      `gorm:"foreignKey:EquipoID"`
-	HardwareInterno  []HardwareInterno `gorm:"foreignKey:EquipoID"`
-	Software         []Software        `gorm:"foreignKey:EquipoID"`
-	ConfiguracionRed ConfiguracionRed  `gorm:"foreignKey:EquipoID"`
-	UsuariosSistema  []UsuarioSistema  `gorm:"foreignKey:EquipoID"`
-	AccesosRemotos   []AccesoRemoto    `gorm:"foreignKey:EquipoID"`
-	Backups          []Backup          `gorm:"foreignKey:EquipoID"`
-	Reportes         []ReporteServicio `gorm:"foreignKey:EquipoID"`
+	UsuarioResponsable *UsuarioResponsable `gorm:"foreignKey:UsuarioResponsableID"`
+	EstadoEquipo       EstadoEquipo        `gorm:"foreignKey:EstadoEquipoID"`
+	Perifericos        []Periferico        `gorm:"foreignKey:EquipoID"`
+	HardwareInterno    []HardwareInterno   `gorm:"foreignKey:EquipoID"`
+	Software           []Software          `gorm:"foreignKey:EquipoID"`
+	ConfiguracionRed   ConfiguracionRed    `gorm:"foreignKey:EquipoID"`
+	UsuariosSistema    []UsuarioSistema    `gorm:"foreignKey:EquipoID"`
+	AccesosRemotos     []AccesoRemoto      `gorm:"foreignKey:EquipoID"`
+	Backups            []Backup            `gorm:"foreignKey:EquipoID"`
+	Reportes           []ReporteServicio   `gorm:"foreignKey:EquipoID"`
 }
 
 // Periferico representa dispositivos conectados al equipo
@@ -148,7 +149,8 @@ type Backup struct {
 // ReporteServicio representa los reportes técnicos
 type ReporteServicio struct {
 	gorm.Model
-	EquipoID           *uint
+	CreadoPorID        uint      `gorm:"not null"`
+	EquipoID           uint      `gorm:"not null"` // Siempre debe haber un equipo asociado
 	FechaInicio        time.Time `gorm:"not null"`
 	FechaFinalizacion  *time.Time
 	Dependencia        string `gorm:"not null"`
@@ -158,9 +160,10 @@ type ReporteServicio struct {
 	Observaciones      string
 
 	// Relaciones
+	CreadoPor         Usuario           `gorm:"foreignKey:CreadoPorID"`
+	Equipo            Equipo            `gorm:"foreignKey:EquipoID"`
 	TipoMantenimiento TipoMantenimiento `gorm:"foreignKey:ReporteID"`
 	Repuestos         []Repuesto        `gorm:"foreignKey:ReporteID"`
-	Funcionarios      []Funcionario     `gorm:"many2many:reportes_funcionarios;"`
 }
 
 // TipoMantenimiento representa el tipo de mantenimiento realizado
@@ -199,17 +202,4 @@ type EstadoEquipo struct {
 
 	// Relaciones
 	Equipos []Equipo `gorm:"foreignKey:EstadoEquipoID"`
-}
-
-// Funcionario representa al personal técnico
-type Funcionario struct {
-	gorm.Model
-	Nombre string `gorm:"not null"`
-	Cargo  string `gorm:"not null"`
-	Cedula string `gorm:"unique;not null"`
-	Tipo   string `gorm:"check:tipo IN ('FUNCIONARIO', 'CONTRATISTA')"`
-	Area   string `gorm:"check:area IN ('SERVICIO', 'SISTEMAS')"`
-
-	// Relación muchos a muchos con reportes
-	Reportes []ReporteServicio `gorm:"many2many:reportes_funcionarios;"`
 }

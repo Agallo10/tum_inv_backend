@@ -26,7 +26,6 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB, cfg *config.Config) {
 	reporteServicioRepo := repositories.NewReporteServicioRepository(db)
 	tipoMantenimientoRepo := repositories.NewTipoMantenimientoRepository(db)
 	repuestoRepo := repositories.NewRepuestoRepository(db)
-	funcionarioRepo := repositories.NewFuncionarioRepository(db)
 	usuarioRepo := repositories.NewUsuarioRepository(db)
 	secretariaRepo := repositories.NewSecretariaRepository(db)
 	dependenciaRepo := repositories.NewDependenciaRepository(db)
@@ -42,11 +41,11 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB, cfg *config.Config) {
 	usuarioSistemaService := services.NewUsuarioSistemaService(usuarioSistemaRepo)
 	accesoRemotoService := services.NewAccesoRemotoService(accesoRemotoRepo)
 	backupService := services.NewBackupService(backupRepo)
-	reporteServicioService := services.NewReporteServicioService(reporteServicioRepo, funcionarioRepo)
+	reporteServicioService := services.NewReporteServicioService(reporteServicioRepo)
 	tipoMantenimientoService := services.NewTipoMantenimientoService(tipoMantenimientoRepo)
 	repuestoService := services.NewRepuestoService(repuestoRepo)
-	funcionarioService := services.NewFuncionarioService(funcionarioRepo)
 	authService := services.NewAuthService(usuarioRepo, cfg)
+	pdfReporteService := services.NewPDFReporteService(db)
 	secretariaService := services.NewSecretariaService(secretariaRepo)
 	dependenciaService := services.NewDependenciaService(dependenciaRepo)
 	estadoEquipoService := services.NewEstadoEquipoService(estadoEquipoRepo)
@@ -64,11 +63,11 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB, cfg *config.Config) {
 	reporteServicioController := controllers.NewReporteServicioController(reporteServicioService)
 	tipoMantenimientoController := controllers.NewTipoMantenimientoController(tipoMantenimientoService)
 	repuestoController := controllers.NewRepuestoController(repuestoService)
-	funcionarioController := controllers.NewFuncionarioController(funcionarioService)
 	authController := controllers.NewAuthController(authService)
 	secretariaController := controllers.NewSecretariaController(secretariaService)
 	dependenciaController := controllers.NewDependenciaController(dependenciaService)
 	estadoEquipoController := controllers.NewEstadoEquipoController(estadoEquipoService)
+	pdfController := controllers.NewPDFController(pdfReporteService)
 
 	// Middleware
 	jwtMiddleware := middleware.NewJWTMiddleware(authService)
@@ -195,9 +194,14 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB, cfg *config.Config) {
 	reportesServicio.GET("/:id", reporteServicioController.GetReporteServicio)
 	reportesServicio.PUT("/:id", reporteServicioController.UpdateReporteServicio)
 	reportesServicio.DELETE("/:id", reporteServicioController.DeleteReporteServicio)
+	// Rutas para generar PDF del reporte
+	reportesServicio.GET("/:id/pdf", pdfController.GenerarReportePDF)
+	reportesServicio.GET("/:id/pdf/view", pdfController.VisualizarReportePDF)
 
 	// Ruta para obtener reportes de servicio por equipo
 	equipos.GET("/:equipoId/reportes-servicio", reporteServicioController.GetReportesServicioByEquipo)
+	// Ruta para obtener resumen de reportes de servicio por equipo
+	equipos.GET("/:equipoId/reportes-servicio/resumen", reporteServicioController.GetReportesResumenByEquipo)
 
 	// Rutas para Tipos de Mantenimiento
 	tiposMantenimiento := api.Group("/tipos-mantenimiento")
@@ -220,18 +224,6 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB, cfg *config.Config) {
 
 	// Ruta para obtener repuestos por reporte
 	reportesServicio.GET("/:reporteId/repuestos", repuestoController.GetRepuestosByReporte)
-
-	// Rutas para Funcionarios
-	funcionarios := api.Group("/funcionarios")
-	funcionarios.POST("", funcionarioController.CreateFuncionario)
-	funcionarios.GET("", funcionarioController.GetAllFuncionarios)
-	funcionarios.GET("/buscar", funcionarioController.GetFuncionarioByCedula)
-	funcionarios.GET("/:id", funcionarioController.GetFuncionario)
-	funcionarios.PUT("/:id", funcionarioController.UpdateFuncionario)
-	funcionarios.DELETE("/:id", funcionarioController.DeleteFuncionario)
-
-	// Ruta para obtener funcionarios por reporte
-	reportesServicio.GET("/:reporteId/funcionarios", funcionarioController.GetFuncionariosByReporte)
 
 	// Rutas para Secretarías/s
 	secretarias := api.Group("/secretarias")

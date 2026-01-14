@@ -1,6 +1,7 @@
 package dto
 
 import (
+	"strconv"
 	"time"
 	"tum_inv_backend/internal/domain/models"
 )
@@ -8,7 +9,8 @@ import (
 // CrearReporteCompletoDTO representa la estructura para crear un reporte completo con todas sus relaciones
 type CrearReporteCompletoDTO struct {
 	// Datos del reporte principal
-	EquipoID           *uint      `json:"equipo_id,omitempty"`
+	CreadoPorID        uint       `json:"creado_por_id" validate:"required"`
+	EquipoID           uint       `json:"equipo_id" validate:"required"`
 	FechaInicio        time.Time  `json:"fecha_inicio" validate:"required"`
 	FechaFinalizacion  *time.Time `json:"fecha_finalizacion,omitempty"`
 	Dependencia        string     `json:"dependencia" validate:"required"`
@@ -22,9 +24,6 @@ type CrearReporteCompletoDTO struct {
 
 	// Datos de los repuestos utilizados
 	Repuestos []RepuestoDTO `json:"repuestos,omitempty"`
-
-	// IDs de los funcionarios involucrados
-	FuncionarioIDs []uint `json:"funcionario_ids" validate:"required,min=1"`
 }
 
 // TipoMantenimientoDTO representa los datos para crear un tipo de mantenimiento
@@ -53,6 +52,7 @@ type RepuestoDTO struct {
 // ToReporteServicio convierte el DTO a modelo ReporteServicio
 func (dto *CrearReporteCompletoDTO) ToReporteServicio() *models.ReporteServicio {
 	return &models.ReporteServicio{
+		CreadoPorID:        dto.CreadoPorID,
 		EquipoID:           dto.EquipoID,
 		FechaInicio:        dto.FechaInicio,
 		FechaFinalizacion:  dto.FechaFinalizacion,
@@ -96,4 +96,53 @@ func (dto *CrearReporteCompletoDTO) ToRepuestos(reporteID uint) []models.Repuest
 		}
 	}
 	return repuestos
+}
+
+// ReporteResumenDTO representa un resumen de reporte para listados
+type ReporteResumenDTO struct {
+	ID                 uint    `json:"id"`
+	CreadoPorID        uint    `json:"creado_por_id"`
+	CreadoPorNombre    string  `json:"creado_por_nombre"`
+	DiagnosticoFalla   string  `json:"diagnostico_falla"`
+	ActividadRealizada string  `json:"actividad_realizada"`
+	TipoMantenimiento  string  `json:"tipo_mantenimiento"`
+	Repuestos          string  `json:"repuestos"`
+	FechaInicio        string  `json:"fecha_inicio"`
+	FechaFinalizacion  *string `json:"fecha_finalizacion"`
+}
+
+// ReportesToResumenDTO convierte una lista de reportes a DTOs de resumen
+func ReportesToResumenDTO(reportes []models.ReporteServicio) []ReporteResumenDTO {
+	resumen := make([]ReporteResumenDTO, len(reportes))
+	for i, reporte := range reportes {
+		// Determinar texto de repuestos
+		repuestosTexto := "No"
+		if len(reporte.Repuestos) > 0 {
+			repuestosTexto = "Sí (" + strconv.Itoa(len(reporte.Repuestos)) + ")"
+		}
+
+		// Formato de fecha
+		fechaInicio := reporte.FechaInicio.Format("2006-01-02 15:04")
+		var fechaFinalizacion *string
+		if reporte.FechaFinalizacion != nil {
+			formatted := reporte.FechaFinalizacion.Format("2006-01-02 15:04")
+			fechaFinalizacion = &formatted
+		}
+
+		// Nombre del creador
+		creadoPorNombre := reporte.CreadoPor.Nombre + " " + reporte.CreadoPor.Apellido
+
+		resumen[i] = ReporteResumenDTO{
+			ID:                 reporte.ID,
+			CreadoPorID:        reporte.CreadoPorID,
+			CreadoPorNombre:    creadoPorNombre,
+			DiagnosticoFalla:   reporte.DiagnosticoFalla,
+			ActividadRealizada: reporte.ActividadRealizada,
+			TipoMantenimiento:  reporte.TipoMantenimiento.Tipo,
+			Repuestos:          repuestosTexto,
+			FechaInicio:        fechaInicio,
+			FechaFinalizacion:  fechaFinalizacion,
+		}
+	}
+	return resumen
 }

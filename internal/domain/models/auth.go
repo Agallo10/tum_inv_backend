@@ -12,6 +12,7 @@ type Usuario struct {
 	gorm.Model
 	Nombre      string `gorm:"not null"`
 	Apellido    string `gorm:"not null"`
+	Cedula      string `gorm:"unique"`
 	Email       string `gorm:"unique;not null"`
 	Username    string `gorm:"unique;not null"`
 	Password    string `gorm:"not null"`

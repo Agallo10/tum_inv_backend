@@ -14,7 +14,7 @@ type ReporteServicioRepository interface {
 	Delete(id uint) error
 	FindAll() ([]models.ReporteServicio, error)
 	FindByEquipoID(equipoID uint) ([]models.ReporteServicio, error)
-	CreateReporteCompleto(reporte *models.ReporteServicio, tipoMantenimiento *models.TipoMantenimiento, repuestos []models.Repuesto, funcionarios []models.Funcionario) error
+	CreateReporteCompleto(reporte *models.ReporteServicio, tipoMantenimiento *models.TipoMantenimiento, repuestos []models.Repuesto) error
 }
 
 // reporteServicioRepository implementa ReporteServicioRepository
@@ -35,7 +35,7 @@ func (r *reporteServicioRepository) Create(reporte *models.ReporteServicio) erro
 // FindByID busca un reporte de servicio por su ID
 func (r *reporteServicioRepository) FindByID(id uint) (*models.ReporteServicio, error) {
 	var reporte models.ReporteServicio
-	err := r.db.Preload("TipoMantenimiento").Preload("Repuestos").Preload("Funcionarios").First(&reporte, id).Error
+	err := r.db.Preload("TipoMantenimiento").Preload("Repuestos").Preload("CreadoPor").Preload("Equipo.UsuarioResponsable").First(&reporte, id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -55,19 +55,19 @@ func (r *reporteServicioRepository) Delete(id uint) error {
 // FindAll retorna todos los reportes de servicio
 func (r *reporteServicioRepository) FindAll() ([]models.ReporteServicio, error) {
 	var reportes []models.ReporteServicio
-	err := r.db.Preload("TipoMantenimiento").Preload("Repuestos").Preload("Funcionarios").Find(&reportes).Error
+	err := r.db.Preload("TipoMantenimiento").Preload("Repuestos").Preload("CreadoPor").Preload("Equipo.UsuarioResponsable").Find(&reportes).Error
 	return reportes, err
 }
 
 // FindByEquipoID retorna todos los reportes de servicio asociados a un equipo
 func (r *reporteServicioRepository) FindByEquipoID(equipoID uint) ([]models.ReporteServicio, error) {
 	var reportes []models.ReporteServicio
-	err := r.db.Preload("TipoMantenimiento").Preload("Repuestos").Preload("Funcionarios").Where("equipo_id = ?", equipoID).Find(&reportes).Error
+	err := r.db.Preload("TipoMantenimiento").Preload("Repuestos").Preload("CreadoPor").Preload("Equipo.UsuarioResponsable").Where("equipo_id = ?", equipoID).Find(&reportes).Error
 	return reportes, err
 }
 
 // CreateReporteCompleto crea un reporte completo con todas sus relaciones en una transacción
-func (r *reporteServicioRepository) CreateReporteCompleto(reporte *models.ReporteServicio, tipoMantenimiento *models.TipoMantenimiento, repuestos []models.Repuesto, funcionarios []models.Funcionario) error {
+func (r *reporteServicioRepository) CreateReporteCompleto(reporte *models.ReporteServicio, tipoMantenimiento *models.TipoMantenimiento, repuestos []models.Repuesto) error {
 	// Iniciar transacción
 	tx := r.db.Begin()
 	if tx.Error != nil {
@@ -102,14 +102,6 @@ func (r *reporteServicioRepository) CreateReporteCompleto(reporte *models.Report
 				tx.Rollback()
 				return err
 			}
-		}
-	}
-
-	// 4. Asociar funcionarios al reporte
-	if len(funcionarios) > 0 {
-		if err := tx.Model(reporte).Association("Funcionarios").Append(funcionarios); err != nil {
-			tx.Rollback()
-			return err
 		}
 	}
 

@@ -110,6 +110,21 @@ func (c *ReporteServicioController) GetReportesServicioByEquipo(ctx echo.Context
 	return ctx.JSON(http.StatusOK, reportes)
 }
 
+// GetReportesResumenByEquipo obtiene un resumen de los reportes de servicio de un equipo
+func (c *ReporteServicioController) GetReportesResumenByEquipo(ctx echo.Context) error {
+	equipoID, err := strconv.ParseUint(ctx.Param("equipoId"), 10, 32)
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{"error": "ID de equipo inválido"})
+	}
+
+	reportes, err := c.reporteService.GetReportesResumenByEquipoID(uint(equipoID))
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	return ctx.JSON(http.StatusOK, reportes)
+}
+
 // CrearReporteConTipo crea un reporte de servicio completo con tipos de mantenimiento, repuestos y funcionarios
 func (c *ReporteServicioController) CrearReporteConTipo(ctx echo.Context) error {
 	reporteData := new(dto.CrearReporteCompletoDTO)
@@ -138,11 +153,6 @@ func (c *ReporteServicioController) CrearReporteConTipo(ctx echo.Context) error 
 	if len(reporteData.TipoMantenimiento.Tipo) == 0 {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
 			"error": "Debe especificar el tipo de mantenimiento",
-		})
-	}
-	if len(reporteData.FuncionarioIDs) == 0 {
-		return ctx.JSON(http.StatusBadRequest, map[string]string{
-			"error": "Debe especificar al menos un funcionario",
 		})
 	}
 

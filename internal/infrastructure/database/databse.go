@@ -81,7 +81,6 @@ func ConnectDB(cfg *config.Config) *gorm.DB {
 		&models.TipoMantenimiento{},
 		&models.Repuesto{},
 		&models.EstadoEquipo{},
-		&models.Funcionario{},
 		&models.Usuario{},
 	)
 
