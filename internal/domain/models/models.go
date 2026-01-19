@@ -170,12 +170,13 @@ type ReporteServicio struct {
 type TipoMantenimiento struct {
 	gorm.Model
 	ReporteID       uint   `gorm:"not null"`
-	Tipo            string `gorm:"check:tipo IN ('PREVENTIVO', 'CORRECTIVO')"`
+	Tipo            string // PREVENTIVO, CORRECTIVO o vacío (se muestra como OTRO)
 	Revision        bool   `gorm:"default:false"`
 	Instalacion     bool   `gorm:"default:false"`
 	Configuracion   bool   `gorm:"default:false"`
 	Ingreso         bool   `gorm:"default:false"`
 	Salida          bool   `gorm:"default:false"`
+	ConceptoBaja    bool   `gorm:"default:false"`
 	Otro            bool   `gorm:"default:false"`
 	DescripcionOtro string
 }

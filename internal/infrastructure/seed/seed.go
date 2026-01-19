@@ -446,6 +446,7 @@ func (s *Seeder) SeedUsuarios() error {
 		{
 			Nombre:   "Administrador",
 			Apellido: "Sistema",
+			Cedula:   "1107090505",
 			Email:    "admin@municipio.gov.co",
 			Username: "admin",
 			Password: "admin123", // Se hasheará antes de guardar
@@ -455,6 +456,7 @@ func (s *Seeder) SeedUsuarios() error {
 		{
 			Nombre:   "Técnico",
 			Apellido: "Soporte",
+			Cedula:   "1107090506",
 			Email:    "tecnico@municipio.gov.co",
 			Username: "tecnico",
 			Password: "tecnico123", // Se hasheará antes de guardar
@@ -484,7 +486,13 @@ func (s *Seeder) SeedUsuarios() error {
 				return err
 			}
 		} else {
-			log.Printf("Usuario '%s' ya existe, omitiendo...", usuario.Username)
+			// Usuario existe, actualizar cédula
+			if usuario.Cedula != "" {
+				s.DB.Model(&existing).Update("cedula", usuario.Cedula)
+				log.Printf("Usuario '%s' actualizado con cédula %s", usuario.Username, usuario.Cedula)
+			} else {
+				log.Printf("Usuario '%s' ya existe, omitiendo...", usuario.Username)
+			}
 		}
 	}
 

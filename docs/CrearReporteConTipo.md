@@ -32,6 +32,7 @@ POST /api/reportes-servicio/completo
     "configuracion": true,
     "ingreso": true,
     "salida": true,
+    "concepto_baja": false,
     "otro": false,
     "descripcion_otro": ""
   },
@@ -62,8 +63,8 @@ POST /api/reportes-servicio/completo
 
 ### Tipo de Mantenimiento:
 
-- Un tipo de mantenimiento debe ser especificado
-- `tipo` (string): Debe ser "PREVENTIVO" o "CORRECTIVO"
+- `tipo` (string): Puede ser "PREVENTIVO", "CORRECTIVO" o vacío (se mostrará como OTRO)
+- `concepto_baja` (bool): Indica si es un concepto de baja de equipo
 
 ### Repuestos (opcionales):
 

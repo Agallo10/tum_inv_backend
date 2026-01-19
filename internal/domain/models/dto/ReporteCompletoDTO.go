@@ -34,6 +34,7 @@ type TipoMantenimientoDTO struct {
 	Configuracion   bool   `json:"configuracion"`
 	Ingreso         bool   `json:"ingreso"`
 	Salida          bool   `json:"salida"`
+	ConceptoBaja    bool   `json:"concepto_baja"`
 	Otro            bool   `json:"otro"`
 	DescripcionOtro string `json:"descripcion_otro,omitempty"`
 }
@@ -74,6 +75,7 @@ func (dto *CrearReporteCompletoDTO) ToTipoMantenimiento(reporteID uint) models.T
 		Configuracion:   dto.TipoMantenimiento.Configuracion,
 		Ingreso:         dto.TipoMantenimiento.Ingreso,
 		Salida:          dto.TipoMantenimiento.Salida,
+		ConceptoBaja:    dto.TipoMantenimiento.ConceptoBaja,
 		Otro:            dto.TipoMantenimiento.Otro,
 		DescripcionOtro: dto.TipoMantenimiento.DescripcionOtro,
 	}

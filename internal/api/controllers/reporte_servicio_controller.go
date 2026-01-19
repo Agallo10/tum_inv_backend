@@ -150,16 +150,14 @@ func (c *ReporteServicioController) CrearReporteConTipo(ctx echo.Context) error 
 			"error": "La actividad realizada es obligatoria",
 		})
 	}
-	if len(reporteData.TipoMantenimiento.Tipo) == 0 {
-		return ctx.JSON(http.StatusBadRequest, map[string]string{
-			"error": "Debe especificar el tipo de mantenimiento",
-		})
-	}
 
-	// Validar tipo de mantenimiento
-	if reporteData.TipoMantenimiento.Tipo != "PREVENTIVO" && reporteData.TipoMantenimiento.Tipo != "CORRECTIVO" {
+	// Validar tipo de mantenimiento: PREVENTIVO, CORRECTIVO, o vacío si Otro es true
+	tipoValido := reporteData.TipoMantenimiento.Tipo == "PREVENTIVO" || reporteData.TipoMantenimiento.Tipo == "CORRECTIVO"
+	otroValido := reporteData.TipoMantenimiento.Tipo == "" && reporteData.TipoMantenimiento.Otro
+
+	if !tipoValido && !otroValido {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
-			"error": "El tipo de mantenimiento debe ser 'PREVENTIVO' o 'CORRECTIVO'",
+			"error": "Debe especificar el tipo de mantenimiento (PREVENTIVO, CORRECTIVO) o marcar 'otro'",
 		})
 	}
 

@@ -128,13 +128,13 @@ func (s *reporteServicioService) CrearReporteConTipo(reporteData *dto.CrearRepor
 	if reporteData.ActividadRealizada == "" {
 		return nil, errors.New("la actividad realizada es obligatoria")
 	}
-	if reporteData.TipoMantenimiento.Tipo == "" {
-		return nil, errors.New("debe especificar el tipo de mantenimiento")
-	}
 
-	// Validar que el tipo de mantenimiento sea válido
-	if reporteData.TipoMantenimiento.Tipo != "PREVENTIVO" && reporteData.TipoMantenimiento.Tipo != "CORRECTIVO" {
-		return nil, errors.New("el tipo de mantenimiento debe ser 'PREVENTIVO' o 'CORRECTIVO'")
+	// Validar tipo de mantenimiento: debe ser PREVENTIVO, CORRECTIVO, o vacío si Otro es true
+	tipoValido := reporteData.TipoMantenimiento.Tipo == "PREVENTIVO" || reporteData.TipoMantenimiento.Tipo == "CORRECTIVO"
+	otroValido := reporteData.TipoMantenimiento.Tipo == "" && reporteData.TipoMantenimiento.Otro
+
+	if !tipoValido && !otroValido {
+		return nil, errors.New("debe especificar el tipo de mantenimiento (PREVENTIVO, CORRECTIVO) o marcar 'otro'")
 	}
 
 	// Preparar datos para el repositorio

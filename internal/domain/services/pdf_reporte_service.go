@@ -201,7 +201,7 @@ func (s *PDFReporteService) agregarTrabajoRealizado(pdf *fpdf.Fpdf, tm models.Ti
 	x1 := marginLeft       // MANTENIMIENTO PREVENTIVO
 	x2 := marginLeft + 55  // REVISIÓN
 	x3 := marginLeft + 95  // INSTALACIÓN
-	x4 := marginLeft + 140 // CONFIGURACION
+	x4 := marginLeft + 140 // CONFIGURACION / CONCEPTO DE BAJA
 
 	pdf.SetXY(x1, rowY)
 	s.dibujarCheckbox(pdf, tm.Tipo == "PREVENTIVO")
@@ -221,12 +221,15 @@ func (s *PDFReporteService) agregarTrabajoRealizado(pdf *fpdf.Fpdf, tm models.Ti
 	pdf.SetXY(x4, rowY)
 	s.dibujarCheckbox(pdf, tm.Configuracion)
 	pdf.Cell(2, 5, "")
-	pdf.Cell(40, 5, "CONFIGURACION:")
+	pdf.Cell(40, 5, "CONFIGURACION")
 
 	pdf.Ln(10)
 
-	// Segunda fila: MANTENIMIENTO CORRECTIVO | INGRESO | SALIDA | OTRO:
+	// Segunda fila: MANTENIMIENTO CORRECTIVO | INGRESO | SALIDA | CONCEPTO DE BAJA
 	rowY = pdf.GetY()
+
+	// Determinar si Tipo está vacío (se marca como OTRO)
+	esOtro := tm.Tipo == "" || (tm.Tipo != "PREVENTIVO" && tm.Tipo != "CORRECTIVO")
 
 	pdf.SetXY(x1, rowY)
 	s.dibujarCheckbox(pdf, tm.Tipo == "CORRECTIVO")
@@ -244,16 +247,25 @@ func (s *PDFReporteService) agregarTrabajoRealizado(pdf *fpdf.Fpdf, tm models.Ti
 	pdf.Cell(25, 5, "SALIDA")
 
 	pdf.SetXY(x4, rowY)
-	s.dibujarCheckbox(pdf, tm.Otro)
+	s.dibujarCheckbox(pdf, tm.ConceptoBaja)
+	pdf.Cell(2, 5, "")
+	pdf.Cell(40, 5, "CONCEPTO DE BAJA")
+
+	pdf.Ln(10)
+
+	// Tercera fila: OTRO con descripción
+	rowY = pdf.GetY()
+	pdf.SetXY(x1, rowY)
+	s.dibujarCheckbox(pdf, esOtro || tm.Otro)
 	pdf.Cell(2, 5, "")
 	pdf.Cell(12, 5, "OTRO:")
 	if tm.DescripcionOtro != "" {
-		pdf.Cell(30, 5, tm.DescripcionOtro)
+		pdf.Cell(contentWidth-30, 5, tm.DescripcionOtro)
 	} else {
-		pdf.Cell(30, 5, "____________________")
+		pdf.Cell(contentWidth-30, 5, "_________________________________________________________________________________")
 	}
 
-	pdf.Ln(12)
+	pdf.Ln(10)
 }
 
 func (s *PDFReporteService) dibujarCheckboxConLabel(pdf *fpdf.Fpdf, x, y float64, label string, checked bool) {
