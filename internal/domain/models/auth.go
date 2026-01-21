@@ -47,6 +47,7 @@ type LoginRequest struct {
 type RegisterRequest struct {
 	Nombre   string `json:"nombre" validate:"required"`
 	Apellido string `json:"apellido" validate:"required"`
+	Cedula   string `json:"cedula" validate:"required"`
 	Email    string `json:"email" validate:"required,email"`
 	Username string `json:"username" validate:"required"`
 	Password string `json:"password" validate:"required,min=6"`

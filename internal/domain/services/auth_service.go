@@ -32,6 +32,7 @@ type AuthService interface {
 	ValidateToken(tokenString string) (*JWTClaims, error)
 	RefreshToken(refreshToken string) (*models.TokenResponse, error)
 	GetUserByID(id uint) (*models.Usuario, error)
+	GetAllUsers() ([]models.Usuario, error)
 }
 
 // authService implementa AuthService
@@ -66,6 +67,7 @@ func (s *authService) Register(req models.RegisterRequest) (*models.Usuario, err
 	usuario := &models.Usuario{
 		Nombre:   req.Nombre,
 		Apellido: req.Apellido,
+		Cedula:   req.Cedula,
 		Email:    req.Email,
 		Username: req.Username,
 		Password: req.Password,
@@ -203,6 +205,21 @@ func (s *authService) RefreshToken(refreshToken string) (*models.TokenResponse, 
 // GetUserByID obtiene un usuario por su ID
 func (s *authService) GetUserByID(id uint) (*models.Usuario, error) {
 	return s.usuarioRepo.FindByID(id)
+}
+
+// GetAllUsers obtiene todos los usuarios registrados
+func (s *authService) GetAllUsers() ([]models.Usuario, error) {
+	usuarios, err := s.usuarioRepo.FindAll()
+	if err != nil {
+		return nil, err
+	}
+
+	// Ocultar contraseñas en la respuesta
+	for i := range usuarios {
+		usuarios[i].Password = ""
+	}
+
+	return usuarios, nil
 }
 
 // generateAccessToken genera un token de acceso JWT

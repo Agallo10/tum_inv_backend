@@ -28,7 +28,7 @@ func (c *AuthController) Register(ctx echo.Context) error {
 	}
 
 	// Validar datos
-	if req.Nombre == "" || req.Apellido == "" || req.Email == "" || req.Username == "" || req.Password == "" {
+	if req.Nombre == "" || req.Apellido == "" || req.Cedula == "" || req.Email == "" || req.Username == "" || req.Password == "" {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{"error": "Todos los campos son obligatorios"})
 	}
 
@@ -114,4 +114,18 @@ func (c *AuthController) GetProfile(ctx echo.Context) error {
 	usuario.Password = ""
 
 	return ctx.JSON(http.StatusOK, usuario)
+}
+
+// GetAllUsers obtiene la lista de todos los usuarios registrados (solo admin)
+func (c *AuthController) GetAllUsers(ctx echo.Context) error {
+	// Obtener usuarios
+	usuarios, err := c.authService.GetAllUsers()
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{"error": "Error obteniendo usuarios"})
+	}
+
+	return ctx.JSON(http.StatusOK, map[string]interface{}{
+		"usuarios": usuarios,
+		"total":    len(usuarios),
+	})
 }
