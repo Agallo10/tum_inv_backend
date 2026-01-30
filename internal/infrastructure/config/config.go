@@ -11,16 +11,18 @@ import (
 
 // Config almacena todas las configuraciones de la aplicación
 type Config struct {
-	DBHost     string
-	DBPort     string
-	DBUser     string
-	DBPassword string
-	DBName     string
-	DBSSLMode  string
-	DBTimeout  time.Duration
-	AppPort    string
-	AppEnv     string
-	JWTSecret  string
+	DatabaseURL string // Railway provee esta variable directamente
+	DBHost      string
+	DBPort      string
+	DBUser      string
+	DBPassword  string
+	DBName      string
+	DBSSLMode   string
+	DBTimeout   time.Duration
+	AppPort     string
+	AppEnv      string
+	JWTSecret   string
+	FrontendURL string
 }
 
 // LoadConfig carga la configuración desde variables de entorno
@@ -37,16 +39,18 @@ func LoadConfig() *Config {
 	}
 
 	return &Config{
-		DBHost:     getEnv("DB_HOST", "localhost"),
-		DBPort:     getEnv("DB_PORT", "5432"),
-		DBUser:     getEnv("DB_USER", "postgres"),
-		DBPassword: getEnv("DB_PASSWORD", ""),
-		DBName:     getEnv("DB_NAME", "inventario"),
-		DBSSLMode:  getEnv("DB_SSLMODE", "disable"),
-		DBTimeout:  time.Duration(timeout) * time.Second,
-		AppPort:    getEnv("APP_PORT", "8080"),
-		AppEnv:     getEnv("APP_ENV", "development"),
-		JWTSecret:  getEnv("JWT_SECRET", "tu_clave_secreta_jwt_super_segura"),
+		DatabaseURL: getEnv("DATABASE_URL", ""), // Railway provee esta variable
+		DBHost:      getEnv("DB_HOST", "localhost"),
+		DBPort:      getEnv("DB_PORT", "5432"),
+		DBUser:      getEnv("DB_USER", "postgres"),
+		DBPassword:  getEnv("DB_PASSWORD", ""),
+		DBName:      getEnv("DB_NAME", "inventario"),
+		DBSSLMode:   getEnv("DB_SSLMODE", "disable"),
+		DBTimeout:   time.Duration(timeout) * time.Second,
+		AppPort:     getEnv("APP_PORT", "8080"),
+		AppEnv:      getEnv("APP_ENV", "development"),
+		JWTSecret:   getEnv("JWT_SECRET", "tu_clave_secreta_jwt_super_segura"),
+		FrontendURL: getEnv("FRONTEND_URL", "http://localhost:5173"),
 	}
 }
 

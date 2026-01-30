@@ -75,6 +75,14 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB, cfg *config.Config) {
 	// Grupo de rutas para API
 	api := e.Group("/api")
 
+	// Health check para monitoreo y load balancers
+	api.GET("/health", func(c echo.Context) error {
+		return c.JSON(200, map[string]string{
+			"status":  "healthy",
+			"service": "tum-inv-backend",
+		})
+	})
+
 	// Rutas de autenticación (públicas)
 	auth := api.Group("/auth")
 	auth.POST("/register", authController.Register)

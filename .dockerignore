@@ -1,0 +1,25 @@
+# Dependencias temporales
+vendor/
+
+# Build outputs
+tmp/
+main
+
+# Archivos de entorno con secretos
+.env
+.env.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+
+# Logs
+*.log
+
+# Binarios de test
+*.test
+*.out

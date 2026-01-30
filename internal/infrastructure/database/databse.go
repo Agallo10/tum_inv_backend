@@ -16,15 +16,25 @@ var DB *gorm.DB
 
 // ConnectDB establece la conexión con la base de datos y devuelve la instancia de DB
 func ConnectDB(cfg *config.Config) *gorm.DB {
-	dsn := fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		cfg.DBHost,
-		cfg.DBPort,
-		cfg.DBUser,
-		cfg.DBPassword,
-		cfg.DBName,
-		cfg.DBSSLMode,
-	)
+	var dsn string
+
+	// Railway provee DATABASE_URL directamente
+	if cfg.DatabaseURL != "" {
+		dsn = cfg.DatabaseURL
+		log.Println("Usando DATABASE_URL para conexión (Railway)")
+	} else {
+		// Fallback a variables individuales (desarrollo local)
+		dsn = fmt.Sprintf(
+			"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+			cfg.DBHost,
+			cfg.DBPort,
+			cfg.DBUser,
+			cfg.DBPassword,
+			cfg.DBName,
+			cfg.DBSSLMode,
+		)
+		log.Println("Usando variables individuales para conexión")
+	}
 
 	// Configurar logger de GORM según el entorno
 	gormConfig := &gorm.Config{}
