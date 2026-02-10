@@ -69,6 +69,10 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB, cfg *config.Config) {
 	estadoEquipoController := controllers.NewEstadoEquipoController(estadoEquipoService)
 	pdfController := controllers.NewPDFController(pdfReporteService)
 
+	// Dashboard
+	dashboardService := services.NewDashboardService(db)
+	dashboardController := controllers.NewDashboardController(dashboardService)
+
 	// Middleware
 	jwtMiddleware := middleware.NewJWTMiddleware(authService)
 
@@ -82,6 +86,9 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB, cfg *config.Config) {
 			"service": "tum-inv-backend",
 		})
 	})
+
+	// Dashboard - estadísticas en una sola petición
+	api.GET("/dashboard/stats", dashboardController.GetDashboardStats)
 
 	// Rutas de autenticación (públicas)
 	auth := api.Group("/auth")

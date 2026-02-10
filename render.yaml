@@ -1,0 +1,20 @@
+# render.yaml - Blueprint para Render.com
+# https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: tum-inv-backend
+    runtime: go
+    rootDir: tum_inv_backend
+    buildCommand: go build -ldflags="-w -s" -o main .
+    startCommand: ./main
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL
+        sync: false  # Configurar manualmente con la URL de Supabase
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        sync: false  # URL de Vercel
+      - key: APP_ENV
+        value: production
