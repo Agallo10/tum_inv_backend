@@ -14,6 +14,8 @@ type PerifericoService interface {
 	DeletePeriferico(id uint) error
 	GetAllPerifericos() ([]models.Periferico, error)
 	GetPerifericosByEquipoID(equipoID uint) ([]models.Periferico, error)
+	GetPerifericosSinEquipo() ([]models.Periferico, error)
+	AsignarEquipo(perifericoID uint, equipoID *uint) error
 }
 
 // perifericoService implementa PerifericoService
@@ -28,7 +30,7 @@ func NewPerifericoService(perifericoRepo repositories.PerifericoRepository) Peri
 
 // CreatePeriferico crea un nuevo periférico
 func (s *perifericoService) CreatePeriferico(periferico *models.Periferico) error {
-	if periferico.EquipoID == 0 {
+	if periferico.EquipoID == nil || *periferico.EquipoID == 0 {
 		return errors.New("el ID del equipo es obligatorio")
 	}
 	if periferico.TipoPeriferico == "" {
@@ -69,4 +71,17 @@ func (s *perifericoService) GetPerifericosByEquipoID(equipoID uint) ([]models.Pe
 		return nil, errors.New("ID de equipo no válido")
 	}
 	return s.perifericoRepo.FindByEquipoID(equipoID)
+}
+
+// GetPerifericosSinEquipo obtiene todos los periféricos sin equipo asignado
+func (s *perifericoService) GetPerifericosSinEquipo() ([]models.Periferico, error) {
+	return s.perifericoRepo.FindSinEquipo()
+}
+
+// AsignarEquipo asigna un equipo a un periférico (solo actualiza el FK)
+func (s *perifericoService) AsignarEquipo(perifericoID uint, equipoID *uint) error {
+	if perifericoID == 0 {
+		return errors.New("ID de periférico no válido")
+	}
+	return s.perifericoRepo.AsignarEquipo(perifericoID, equipoID)
 }

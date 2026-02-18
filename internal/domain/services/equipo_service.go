@@ -17,6 +17,7 @@ type EquipoService interface {
 	GetEquiposByDependenciaID(dependenciaID uint) ([]models.Equipo, error)
 	GetEquipoUsuDepByID(equipoID uint) (dto.EquipoConResponsableDTO, error)
 	GetAllEquiposDetalle() ([]dto.EquipoConResponsableDTO, error)
+	AsignarResponsable(equipoID uint, usuarioResponsableID *uint) error
 }
 
 // equipoService implementa EquipoService
@@ -53,10 +54,18 @@ func (s *equipoService) UpdateEquipo(equipo *models.Equipo) error {
 	return s.equipoRepo.Update(equipo)
 }
 
-// DeleteEquipo elimina un equipo por su ID
+// DeleteEquipo elimina un equipo por su ID, liberando primero sus periféricos
 func (s *equipoService) DeleteEquipo(id uint) error {
 	if id == 0 {
 		return errors.New("ID de equipo no válido")
+	}
+	// Liberar periféricos: poner EquipoID en NULL
+	if err := s.equipoRepo.LiberarPerifericos(id); err != nil {
+		return errors.New("error al liberar periféricos del equipo: " + err.Error())
+	}
+	// Eliminar datos asociados: Software, Hardware, ConfigRed, UsuariosSistema, AccesosRemotos, Backups
+	if err := s.equipoRepo.EliminarDatosAsociados(id); err != nil {
+		return errors.New("error al eliminar datos asociados del equipo: " + err.Error())
 	}
 	return s.equipoRepo.Delete(id)
 }
@@ -82,4 +91,12 @@ func (s *equipoService) GetEquipoUsuDepByID(equipoID uint) (dto.EquipoConRespons
 
 func (s *equipoService) GetAllEquiposDetalle() ([]dto.EquipoConResponsableDTO, error) {
 	return s.equipoRepo.FindAllEquiposDetalle()
+}
+
+// AsignarResponsable asigna un usuario responsable a un equipo (solo actualiza el FK)
+func (s *equipoService) AsignarResponsable(equipoID uint, usuarioResponsableID *uint) error {
+	if equipoID == 0 {
+		return errors.New("ID de equipo no válido")
+	}
+	return s.equipoRepo.AsignarResponsable(equipoID, usuarioResponsableID)
 }

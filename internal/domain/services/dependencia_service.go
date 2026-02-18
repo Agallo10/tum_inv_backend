@@ -82,20 +82,15 @@ func (s *dependenciaService) UpdateDependencia(dependencia *models.Dependencia) 
 	return s.repo.UpdateDependencia(dependencia)
 }
 
-// DeleteDependencia elimina una dependencia por su ID
+// DeleteDependencia elimina una dependencia por su ID, liberando usuarios responsables
 func (s *dependenciaService) DeleteDependencia(id uint) error {
 	if id == 0 {
 		return errors.New("ID de dependencia no válido")
 	}
 
-	// Verificar si la dependencia tiene usuarios responsables asociados
-	dependencia, err := s.repo.GetDependenciaByID(id)
-	if err != nil {
-		return err
-	}
-
-	if len(dependencia.UsuarioResponsables) > 0 {
-		return errors.New("no se puede eliminar la dependencia porque tiene usuarios responsables asociados")
+	// Liberar usuarios responsables antes de eliminar
+	if err := s.repo.LiberarUsuariosDeDependencia(id); err != nil {
+		return errors.New("error al liberar usuarios de la dependencia")
 	}
 
 	return s.repo.DeleteDependencia(id)

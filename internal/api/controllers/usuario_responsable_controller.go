@@ -118,6 +118,28 @@ func (c *UsuarioResponsableController) GetUsuarioResponsableByCedula(ctx echo.Co
 
 // 	usuario, err := c.usuarioService.GetUsuarioResponsableByID(uint(id))
 // 	if err != nil {
+
+// AsignarDependencia asigna una dependencia a un usuario responsable (solo cambia el FK)
+func (c *UsuarioResponsableController) AsignarDependencia(ctx echo.Context) error {
+	id, err := strconv.ParseUint(ctx.Param("id"), 10, 32)
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{"error": "ID inválido"})
+	}
+
+	var body struct {
+		DependenciaID *uint `json:"DependenciaID"`
+	}
+	if err := ctx.Bind(&body); err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{"error": "Datos inválidos"})
+	}
+
+	if err := c.usuarioService.AsignarDependencia(uint(id), body.DependenciaID); err != nil {
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	return ctx.JSON(http.StatusOK, map[string]string{"mensaje": "Dependencia asignada correctamente"})
+}
+
 // 		return ctx.JSON(http.StatusNotFound, map[string]string{"error": "Usuario no encontrado"})
 // 	}
 

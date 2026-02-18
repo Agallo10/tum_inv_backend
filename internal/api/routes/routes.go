@@ -46,7 +46,7 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB, cfg *config.Config) {
 	repuestoService := services.NewRepuestoService(repuestoRepo)
 	authService := services.NewAuthService(usuarioRepo, cfg)
 	pdfReporteService := services.NewPDFReporteService(db)
-	secretariaService := services.NewSecretariaService(secretariaRepo)
+	secretariaService := services.NewSecretariaService(secretariaRepo, dependenciaRepo)
 	dependenciaService := services.NewDependenciaService(dependenciaRepo)
 	estadoEquipoService := services.NewEstadoEquipoService(estadoEquipoRepo)
 
@@ -89,6 +89,7 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB, cfg *config.Config) {
 
 	// Dashboard - estadísticas en una sola petición
 	api.GET("/dashboard/stats", dashboardController.GetDashboardStats)
+	api.GET("/dashboard/sin-secretaria", dashboardController.GetSinSecretaria)
 
 	// Rutas de autenticación (públicas)
 	auth := api.Group("/auth")
@@ -109,6 +110,8 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB, cfg *config.Config) {
 	equipos.GET("/:id", equipoController.GetEquipo)
 	equipos.PUT("/:id", equipoController.UpdateEquipo)
 	equipos.DELETE("/:id", equipoController.DeleteEquipo)
+	// Ruta para asignar un responsable a un equipo (solo cambia el FK)
+	equipos.PATCH("/:id/asignar-responsable", equipoController.AsignarResponsable)
 	// Ruta para obtener equipos dpor dependencia
 	equipos.GET("/:dependenciaId/dependencia", equipoController.GetEquiposByDependencia)
 	// Ruta para obtener la hoja de vida del equipo
@@ -118,9 +121,11 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB, cfg *config.Config) {
 	perifericos := api.Group("/perifericos")
 	perifericos.POST("", perifericoController.CreatePeriferico)
 	perifericos.GET("", perifericoController.GetAllPerifericos)
+	perifericos.GET("/sin-equipo", perifericoController.GetPerifericosSinEquipo)
 	perifericos.GET("/:id", perifericoController.GetPeriferico)
 	perifericos.PUT("/:id", perifericoController.UpdatePeriferico)
 	perifericos.DELETE("/:id", perifericoController.DeletePeriferico)
+	perifericos.PATCH("/:id/asignar-equipo", perifericoController.AsignarEquipo)
 
 	// Ruta para obtener periféricos por equipo
 	equipos.GET("/:equipoId/perifericos", perifericoController.GetPerifericosByEquipo)
@@ -144,6 +149,8 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB, cfg *config.Config) {
 	usuariosResponsables.GET("/:id", usuarioResponsableController.GetUsuarioResponsable)
 	usuariosResponsables.PUT("/:id", usuarioResponsableController.UpdateUsuarioResponsable)
 	usuariosResponsables.DELETE("/:id", usuarioResponsableController.DeleteUsuarioResponsable)
+	// Ruta para asignar una dependencia a un usuario responsable (solo cambia el FK)
+	usuariosResponsables.PATCH("/:id/asignar-dependencia", usuarioResponsableController.AsignarDependencia)
 	// usuariosResponsables.GET("/:id/equipos", usuarioResponsableController.GetEquiposByUsuarioResponsable)
 	usuariosResponsables.GET("/:dependenciaId/dependencia", usuarioResponsableController.GetUsuariosByDependencia)
 

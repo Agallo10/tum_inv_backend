@@ -28,3 +28,15 @@ func (dc *DashboardController) GetDashboardStats(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, stats)
 }
+
+// GetSinSecretaria retorna los equipos y usuarios responsables sin secretaría asignada
+func (dc *DashboardController) GetSinSecretaria(c echo.Context) error {
+	data, err := dc.service.GetSinSecretaria()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": "Error al obtener datos sin secretaría: " + err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, data)
+}

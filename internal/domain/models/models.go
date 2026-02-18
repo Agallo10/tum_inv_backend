@@ -38,7 +38,7 @@ type Dependencia struct {
 // UsuarioResponsable representa al usuario a cargo del equipo
 type UsuarioResponsable struct {
 	gorm.Model
-	DependenciaID    uint   `gorm:"not null"`
+	DependenciaID    *uint
 	NombresApellidos string `gorm:"not null"`
 	Cedula           string `gorm:"unique;not null"`
 	CorreoPersonal   string
@@ -78,7 +78,7 @@ type Equipo struct {
 // Periferico representa dispositivos conectados al equipo
 type Periferico struct {
 	gorm.Model
-	EquipoID       uint
+	EquipoID       *uint
 	TipoPeriferico string `gorm:"check:tipo_periferico IN ('Teclado', 'Mouse', 'Monitor', 'Otros')"`
 	// TipoPeriferico  string `gorm:"check:tipo_periferico IN ('Teclado', 'Mouse', 'Monitor', 'Impresora', 'Escáner', 'Otros')"`
 	PlacaInventario string

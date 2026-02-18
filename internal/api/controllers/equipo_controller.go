@@ -135,3 +135,24 @@ func (c *EquipoController) GetAllEquiposDetalle(ctx echo.Context) error {
 
 	return ctx.JSON(http.StatusOK, equipos)
 }
+
+// AsignarResponsable asigna un usuario responsable a un equipo (solo cambia el FK)
+func (c *EquipoController) AsignarResponsable(ctx echo.Context) error {
+	id, err := strconv.ParseUint(ctx.Param("id"), 10, 32)
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{"error": "ID inválido"})
+	}
+
+	var body struct {
+		UsuarioResponsableID *uint `json:"UsuarioResponsableID"`
+	}
+	if err := ctx.Bind(&body); err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{"error": "Datos inválidos"})
+	}
+
+	if err := c.equipoService.AsignarResponsable(uint(id), body.UsuarioResponsableID); err != nil {
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	return ctx.JSON(http.StatusOK, map[string]string{"mensaje": "Responsable asignado correctamente"})
+}

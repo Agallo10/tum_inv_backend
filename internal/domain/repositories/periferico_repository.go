@@ -14,6 +14,8 @@ type PerifericoRepository interface {
 	Delete(id uint) error
 	FindAll() ([]models.Periferico, error)
 	FindByEquipoID(equipoID uint) ([]models.Periferico, error)
+	FindSinEquipo() ([]models.Periferico, error)
+	AsignarEquipo(perifericoID uint, equipoID *uint) error
 }
 
 // perifericoRepository implementa PerifericoRepository
@@ -63,4 +65,16 @@ func (r *perifericoRepository) FindByEquipoID(equipoID uint) ([]models.Periferic
 	var perifericos []models.Periferico
 	err := r.db.Where("equipo_id = ?", equipoID).Find(&perifericos).Error
 	return perifericos, err
+}
+
+// FindSinEquipo retorna todos los periféricos sin equipo asignado
+func (r *perifericoRepository) FindSinEquipo() ([]models.Periferico, error) {
+	var perifericos []models.Periferico
+	err := r.db.Where("equipo_id IS NULL").Find(&perifericos).Error
+	return perifericos, err
+}
+
+// AsignarEquipo actualiza solo el EquipoID de un periférico
+func (r *perifericoRepository) AsignarEquipo(perifericoID uint, equipoID *uint) error {
+	return r.db.Model(&models.Periferico{}).Where("id = ?", perifericoID).Update("equipo_id", equipoID).Error
 }

@@ -15,6 +15,7 @@ type UsuarioResponsableRepository interface {
 	FindAll() ([]models.UsuarioResponsable, error)
 	FindByCedula(cedula string) (*models.UsuarioResponsable, error)
 	FindByDependenciaID(dependenciaID uint) ([]models.UsuarioResponsable, error)
+	AsignarDependencia(usuarioID uint, dependenciaID *uint) error
 }
 
 // usuarioResponsableRepository implementa UsuarioResponsableRepository
@@ -74,4 +75,9 @@ func (r *usuarioResponsableRepository) FindByDependenciaID(dependenciaID uint) (
 	var usuarios []models.UsuarioResponsable
 	err := r.db.Where("dependencia_id = ?", dependenciaID).Find(&usuarios).Error
 	return usuarios, err
+}
+
+// AsignarDependencia actualiza solo el DependenciaID de un usuario responsable
+func (r *usuarioResponsableRepository) AsignarDependencia(usuarioID uint, dependenciaID *uint) error {
+	return r.db.Model(&models.UsuarioResponsable{}).Where("id = ?", usuarioID).Update("dependencia_id", dependenciaID).Error
 }

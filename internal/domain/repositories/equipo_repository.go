@@ -18,6 +18,9 @@ type EquipoRepository interface {
 	FindByDependenciaID(dependenciaID uint) ([]models.Equipo, error)
 	FindEquiUsuDepByID(id uint) (dto.EquipoConResponsableDTO, error)
 	FindAllEquiposDetalle() ([]dto.EquipoConResponsableDTO, error)
+	AsignarResponsable(equipoID uint, usuarioResponsableID *uint) error
+	LiberarPerifericos(equipoID uint) error
+	EliminarDatosAsociados(equipoID uint) error
 }
 
 // equipoRepository implementa EquipoRepository
@@ -79,6 +82,7 @@ func (r *equipoRepository) FindByDependenciaID(dependenciaID uint) ([]models.Equ
   FROM usuario_responsables ur
   JOIN equipos e ON ur.id = e.usuario_responsable_id
   WHERE ur.dependencia_id = ?
+  AND e.deleted_at IS NULL
 `, dependenciaID).
 		Preload("UsuarioResponsable").
 		Preload("Perifericos").
@@ -145,3 +149,31 @@ func (r *equipoRepository) FindAllEquiposDetalle() ([]dto.EquipoConResponsableDT
 // 		Find(&equipos).Error
 // 	return equipos, err
 // }
+
+// AsignarResponsable actualiza solo el UsuarioResponsableID de un equipo
+func (r *equipoRepository) AsignarResponsable(equipoID uint, usuarioResponsableID *uint) error {
+	return r.db.Model(&models.Equipo{}).Where("id = ?", equipoID).Update("usuario_responsable_id", usuarioResponsableID).Error
+}
+
+// LiberarPerifericos pone EquipoID en NULL para todos los periféricos de un equipo
+func (r *equipoRepository) LiberarPerifericos(equipoID uint) error {
+	return r.db.Model(&models.Periferico{}).Where("equipo_id = ?", equipoID).Update("equipo_id", nil).Error
+}
+
+// EliminarDatosAsociados elimina Software, HardwareInterno, ConfiguracionRed, UsuariosSistema, AccesosRemotos y Backups de un equipo
+func (r *equipoRepository) EliminarDatosAsociados(equipoID uint) error {
+	modelos := []interface{}{
+		&models.Software{},
+		&models.HardwareInterno{},
+		&models.ConfiguracionRed{},
+		&models.UsuarioSistema{},
+		&models.AccesoRemoto{},
+		&models.Backup{},
+	}
+	for _, m := range modelos {
+		if err := r.db.Where("equipo_id = ?", equipoID).Delete(m).Error; err != nil {
+			return err
+		}
+	}
+	return nil
+}

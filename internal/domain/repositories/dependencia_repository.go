@@ -14,6 +14,7 @@ type DependenciaRepository interface {
 	UpdateDependencia(dependencia *models.Dependencia) error
 	DeleteDependencia(id uint) error
 	GetDependenciasBySecretariaID(secretariaID uint) ([]models.Dependencia, error)
+	LiberarUsuariosDeDependencia(dependenciaID uint) error
 }
 
 // dependenciaRepository implementa DependenciaRepository
@@ -63,4 +64,9 @@ func (r *dependenciaRepository) GetDependenciasBySecretariaID(secretariaID uint)
 	var dependencias []models.Dependencia
 	err := r.db.Where("secretaria_id = ?", secretariaID).Find(&dependencias).Error
 	return dependencias, err
+}
+
+// LiberarUsuariosDeDependencia desvincula usuarios responsables de una dependencia sin eliminarlos
+func (r *dependenciaRepository) LiberarUsuariosDeDependencia(dependenciaID uint) error {
+	return r.db.Model(&models.UsuarioResponsable{}).Where("dependencia_id = ?", dependenciaID).Update("dependencia_id", gorm.Expr("NULL")).Error
 }

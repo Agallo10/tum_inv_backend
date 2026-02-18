@@ -15,6 +15,7 @@ type UsuarioResponsableService interface {
 	GetAllUsuariosResponsables() ([]models.UsuarioResponsable, error)
 	GetUsuarioResponsableByCedula(cedula string) (*models.UsuarioResponsable, error)
 	GetUsuariosByDependenciaID(dependenciaID uint) ([]models.UsuarioResponsable, error)
+	AsignarDependencia(usuarioID uint, dependenciaID *uint) error
 }
 
 // usuarioResponsableService implementa UsuarioResponsableService
@@ -112,4 +113,12 @@ func (s *usuarioResponsableService) GetUsuariosByDependenciaID(dependenciaID uin
 		return nil, errors.New("ID de dependencia no válido")
 	}
 	return s.usuarioRepo.FindByDependenciaID(dependenciaID)
+}
+
+// AsignarDependencia asigna una dependencia a un usuario responsable (solo actualiza el FK)
+func (s *usuarioResponsableService) AsignarDependencia(usuarioID uint, dependenciaID *uint) error {
+	if usuarioID == 0 {
+		return errors.New("ID de usuario no válido")
+	}
+	return s.usuarioRepo.AsignarDependencia(usuarioID, dependenciaID)
 }

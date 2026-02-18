@@ -112,3 +112,34 @@ func (c *PerifericoController) GetPerifericosByEquipo(ctx echo.Context) error {
 
 	return ctx.JSON(http.StatusOK, perifericos)
 }
+
+// GetPerifericosSinEquipo obtiene todos los periféricos sin equipo asignado
+func (c *PerifericoController) GetPerifericosSinEquipo(ctx echo.Context) error {
+	perifericos, err := c.perifericoService.GetPerifericosSinEquipo()
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	return ctx.JSON(http.StatusOK, perifericos)
+}
+
+// AsignarEquipo asigna un equipo a un periférico (solo cambia el FK)
+func (c *PerifericoController) AsignarEquipo(ctx echo.Context) error {
+	id, err := strconv.ParseUint(ctx.Param("id"), 10, 32)
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{"error": "ID inválido"})
+	}
+
+	var body struct {
+		EquipoID *uint `json:"EquipoID"`
+	}
+	if err := ctx.Bind(&body); err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{"error": "Datos inválidos"})
+	}
+
+	if err := c.perifericoService.AsignarEquipo(uint(id), body.EquipoID); err != nil {
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	return ctx.JSON(http.StatusOK, map[string]string{"mensaje": "Equipo asignado correctamente"})
+}

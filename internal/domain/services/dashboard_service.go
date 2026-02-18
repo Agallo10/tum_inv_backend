@@ -11,6 +11,8 @@ type DashboardStats struct {
 	TotalSecretarias  int64                  `json:"totalSecretarias"`
 	TotalDependencias int64                  `json:"totalDependencias"`
 	TotalEquipos      int64                  `json:"totalEquipos"`
+	EquiposSinAsignar int64                  `json:"equiposSinAsignar"`
+	UsuariosLibres    int64                  `json:"usuariosLibres"`
 	EquiposPorEstado  []EstadoCount          `json:"equiposPorEstado"`
 	EquiposPorTipo    []TipoCount            `json:"equiposPorTipo"`
 	Secretarias       []SecretariaConEquipos `json:"secretarias"`
@@ -45,9 +47,40 @@ type DependenciaConEquipos struct {
 	TotalEquipos int    `json:"totalEquipos"`
 }
 
+// EquipoSinSecretaria representa un equipo sin secretaría asignada
+type EquipoSinSecretaria struct {
+	ID               uint    `json:"ID"`
+	TipoDispositivo  string  `json:"TipoDispositivo"`
+	PlacaInventario  string  `json:"PlacaInventario"`
+	Marca            string  `json:"Marca"`
+	Serial           string  `json:"Serial"`
+	Modelo           string  `json:"Modelo"`
+	Estado           string  `json:"Estado"`
+	NombresApellidos *string `json:"NombresApellidos"`
+	Cedula           *string `json:"Cedula"`
+}
+
+// UsuarioSinSecretaria representa un usuario responsable sin secretaría
+type UsuarioSinSecretaria struct {
+	ID               uint   `json:"ID"`
+	NombresApellidos string `json:"NombresApellidos"`
+	Cedula           string `json:"Cedula"`
+	CorreoPersonal   string `json:"CorreoPersonal"`
+	TipoVinculacion  string `json:"TipoVinculacion"`
+	Celular          string `json:"Celular"`
+	TotalEquipos     int    `json:"TotalEquipos"`
+}
+
+// SinSecretariaResponse respuesta con equipos y usuarios sin secretaría
+type SinSecretariaResponse struct {
+	Equipos  []EquipoSinSecretaria  `json:"equipos"`
+	Usuarios []UsuarioSinSecretaria `json:"usuarios"`
+}
+
 // DashboardService interfaz del servicio de dashboard
 type DashboardService interface {
 	GetDashboardStats() (*DashboardStats, error)
+	GetSinSecretaria() (*SinSecretariaResponse, error)
 }
 
 type dashboardService struct {
@@ -66,6 +99,25 @@ func (s *dashboardService) GetDashboardStats() (*DashboardStats, error) {
 	s.db.Model(&models.Secretaria{}).Count(&stats.TotalSecretarias)
 	s.db.Model(&models.Dependencia{}).Count(&stats.TotalDependencias)
 	s.db.Model(&models.Equipo{}).Count(&stats.TotalEquipos)
+
+	// Equipos sin asignar: sin usuario responsable O cuyo usuario no tiene dependencia
+	s.db.Raw(`
+		SELECT COUNT(*) FROM equipos e
+		WHERE e.deleted_at IS NULL
+		AND (
+			e.usuario_responsable_id IS NULL
+			OR e.usuario_responsable_id NOT IN (
+				SELECT ur.id FROM usuario_responsables ur
+				WHERE ur.deleted_at IS NULL AND ur.dependencia_id IS NOT NULL
+			)
+		)
+	`).Scan(&stats.EquiposSinAsignar)
+
+	// Usuarios responsables libres (sin dependencia asignada)
+	s.db.Raw(`
+		SELECT COUNT(*) FROM usuario_responsables
+		WHERE deleted_at IS NULL AND dependencia_id IS NULL
+	`).Scan(&stats.UsuariosLibres)
 
 	// Equipos por estado (1 query con JOIN)
 	s.db.Raw(`
@@ -135,4 +187,39 @@ func (s *dashboardService) GetDashboardStats() (*DashboardStats, error) {
 	}
 
 	return stats, nil
+}
+
+func (s *dashboardService) GetSinSecretaria() (*SinSecretariaResponse, error) {
+	response := &SinSecretariaResponse{}
+
+	// Equipos sin secretaría: sin usuario responsable, o cuyo usuario no tiene dependencia
+	s.db.Raw(`
+		SELECT e.id, e.tipo_dispositivo, e.placa_inventario, e.marca, e.serial, e.modelo,
+			es.nombre as estado,
+			ur.nombres_apellidos, ur.cedula
+		FROM equipos e
+		LEFT JOIN estado_equipos es ON es.id = e.estado_equipo_id
+		LEFT JOIN usuario_responsables ur ON ur.id = e.usuario_responsable_id AND ur.deleted_at IS NULL
+		WHERE e.deleted_at IS NULL
+		AND (
+			e.usuario_responsable_id IS NULL
+			OR ur.dependencia_id IS NULL
+		)
+		ORDER BY e.id DESC
+	`).Scan(&response.Equipos)
+
+	// Usuarios responsables sin dependencia (libres)
+	s.db.Raw(`
+		SELECT ur.id, ur.nombres_apellidos, ur.cedula, ur.correo_personal,
+			ur.tipo_vinculacion, ur.celular,
+			COUNT(e.id) as total_equipos
+		FROM usuario_responsables ur
+		LEFT JOIN equipos e ON e.usuario_responsable_id = ur.id AND e.deleted_at IS NULL
+		WHERE ur.deleted_at IS NULL AND ur.dependencia_id IS NULL
+		GROUP BY ur.id, ur.nombres_apellidos, ur.cedula, ur.correo_personal,
+			ur.tipo_vinculacion, ur.celular
+		ORDER BY ur.nombres_apellidos ASC
+	`).Scan(&response.Usuarios)
+
+	return response, nil
 }
