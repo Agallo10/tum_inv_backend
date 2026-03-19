@@ -229,7 +229,7 @@ func (s *PDFReporteService) agregarTrabajoRealizado(pdf *fpdf.Fpdf, tm models.Ti
 	rowY = pdf.GetY()
 
 	// Determinar si Tipo está vacío (se marca como OTRO)
-	esOtro := tm.Tipo == "" || (tm.Tipo != "PREVENTIVO" && tm.Tipo != "CORRECTIVO")
+	esOtro := tm.Tipo != "PREVENTIVO" && tm.Tipo != "CORRECTIVO" && tm.Otro
 
 	pdf.SetXY(x1, rowY)
 	s.dibujarCheckbox(pdf, tm.Tipo == "CORRECTIVO")

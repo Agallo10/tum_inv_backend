@@ -158,6 +158,8 @@ type ReporteServicio struct {
 	DiagnosticoFalla   string
 	ActividadRealizada string `gorm:"not null"`
 	Observaciones      string
+	ArchivoFirmadoURL  string     // URL del PDF firmado en Supabase Storage
+	FechaCierre        *time.Time // NULL = abierto, con fecha = cerrado
 
 	// Relaciones
 	CreadoPor         Usuario           `gorm:"foreignKey:CreadoPorID"`

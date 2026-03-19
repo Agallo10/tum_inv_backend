@@ -28,7 +28,7 @@ type CrearReporteCompletoDTO struct {
 
 // TipoMantenimientoDTO representa los datos para crear un tipo de mantenimiento
 type TipoMantenimientoDTO struct {
-	Tipo            string `json:"tipo" validate:"required,oneof=PREVENTIVO CORRECTIVO"`
+	Tipo            string `json:"tipo" validate:"omitempty,oneof=PREVENTIVO CORRECTIVO"`
 	Revision        bool   `json:"revision"`
 	Instalacion     bool   `json:"instalacion"`
 	Configuracion   bool   `json:"configuracion"`
@@ -111,6 +111,8 @@ type ReporteResumenDTO struct {
 	Repuestos          string  `json:"repuestos"`
 	FechaInicio        string  `json:"fecha_inicio"`
 	FechaFinalizacion  *string `json:"fecha_finalizacion"`
+	Cerrado            bool    `json:"cerrado"`
+	FechaCierre        *string `json:"fecha_cierre"`
 }
 
 // ReportesToResumenDTO convierte una lista de reportes a DTOs de resumen
@@ -134,6 +136,14 @@ func ReportesToResumenDTO(reportes []models.ReporteServicio) []ReporteResumenDTO
 		// Nombre del creador
 		creadoPorNombre := reporte.CreadoPor.Nombre + " " + reporte.CreadoPor.Apellido
 
+		// Estado de cierre
+		cerrado := reporte.FechaCierre != nil
+		var fechaCierre *string
+		if reporte.FechaCierre != nil {
+			fc := reporte.FechaCierre.Format("2006-01-02 15:04")
+			fechaCierre = &fc
+		}
+
 		resumen[i] = ReporteResumenDTO{
 			ID:                 reporte.ID,
 			CreadoPorID:        reporte.CreadoPorID,
@@ -144,6 +154,8 @@ func ReportesToResumenDTO(reportes []models.ReporteServicio) []ReporteResumenDTO
 			Repuestos:          repuestosTexto,
 			FechaInicio:        fechaInicio,
 			FechaFinalizacion:  fechaFinalizacion,
+			Cerrado:            cerrado,
+			FechaCierre:        fechaCierre,
 		}
 	}
 	return resumen

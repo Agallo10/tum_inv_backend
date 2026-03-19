@@ -2,9 +2,11 @@ package services
 
 import (
 	"errors"
+	"fmt"
 	"tum_inv_backend/internal/domain/models"
 	"tum_inv_backend/internal/domain/models/dto"
 	"tum_inv_backend/internal/domain/repositories"
+	"tum_inv_backend/internal/infrastructure/storage"
 )
 
 // ReporteServicioService define las operaciones del servicio para ReporteServicio
@@ -17,20 +19,29 @@ type ReporteServicioService interface {
 	GetReportesServicioByEquipoID(equipoID uint) ([]models.ReporteServicio, error)
 	GetReportesResumenByEquipoID(equipoID uint) ([]dto.ReporteResumenDTO, error)
 	CrearReporteConTipo(reporteData *dto.CrearReporteCompletoDTO) (*models.ReporteServicio, error)
+	SubirFirmado(reporteID uint, fileData []byte, contentType string) (*models.ReporteServicio, error)
+	ObtenerURLFirmado(reporteID uint) (string, error)
+	ReabrirReporte(reporteID uint) error
 }
 
 // reporteServicioService implementa ReporteServicioService
 type reporteServicioService struct {
 	reporteRepo repositories.ReporteServicioRepository
+	storage     *storage.SupabaseStorage
 }
 
 // NewReporteServicioService crea una nueva instancia de ReporteServicioService
 func NewReporteServicioService(
 	reporteRepo repositories.ReporteServicioRepository,
+	storageSvc ...*storage.SupabaseStorage,
 ) ReporteServicioService {
-	return &reporteServicioService{
+	s := &reporteServicioService{
 		reporteRepo: reporteRepo,
 	}
+	if len(storageSvc) > 0 {
+		s.storage = storageSvc[0]
+	}
+	return s
 }
 
 // CreateReporteServicio crea un nuevo reporte de servicio
@@ -129,14 +140,6 @@ func (s *reporteServicioService) CrearReporteConTipo(reporteData *dto.CrearRepor
 		return nil, errors.New("la actividad realizada es obligatoria")
 	}
 
-	// Validar tipo de mantenimiento: debe ser PREVENTIVO, CORRECTIVO, o vacío si Otro es true
-	tipoValido := reporteData.TipoMantenimiento.Tipo == "PREVENTIVO" || reporteData.TipoMantenimiento.Tipo == "CORRECTIVO"
-	otroValido := reporteData.TipoMantenimiento.Tipo == "" && reporteData.TipoMantenimiento.Otro
-
-	if !tipoValido && !otroValido {
-		return nil, errors.New("debe especificar el tipo de mantenimiento (PREVENTIVO, CORRECTIVO) o marcar 'otro'")
-	}
-
 	// Preparar datos para el repositorio
 	reporte := reporteData.ToReporteServicio()
 	tipoMantenimiento := reporteData.ToTipoMantenimiento(0) // El ID se asignará en el repositorio
@@ -154,4 +157,93 @@ func (s *reporteServicioService) CrearReporteConTipo(reporteData *dto.CrearRepor
 	}
 
 	return reporteCompleto, nil
+}
+
+// SubirFirmado sube un PDF firmado a Supabase Storage y cierra el reporte
+func (s *reporteServicioService) SubirFirmado(reporteID uint, fileData []byte, contentType string) (*models.ReporteServicio, error) {
+	if reporteID == 0 {
+		return nil, errors.New("ID de reporte no válido")
+	}
+	if s.storage == nil {
+		return nil, errors.New("servicio de almacenamiento no configurado")
+	}
+
+	// Verificar que el reporte existe y no está cerrado
+	reporte, err := s.reporteRepo.FindByID(reporteID)
+	if err != nil {
+		return nil, errors.New("reporte no encontrado")
+	}
+	if reporte.FechaCierre != nil {
+		return nil, errors.New("el reporte ya está cerrado")
+	}
+
+	// Subir archivo a Supabase Storage
+	fileName := fmt.Sprintf("reporte_%d_firmado.pdf", reporteID)
+	objectPath, err := s.storage.Upload(fileName, fileData, contentType)
+	if err != nil {
+		return nil, fmt.Errorf("error al subir archivo: %w", err)
+	}
+
+	// Cerrar el reporte en la BD
+	if err := s.reporteRepo.CerrarReporte(reporteID, objectPath); err != nil {
+		return nil, fmt.Errorf("error al cerrar el reporte: %w", err)
+	}
+
+	// Retornar el reporte actualizado
+	return s.reporteRepo.FindByID(reporteID)
+}
+
+// ObtenerURLFirmado genera una URL firmada temporal para descargar el PDF firmado
+func (s *reporteServicioService) ObtenerURLFirmado(reporteID uint) (string, error) {
+	if reporteID == 0 {
+		return "", errors.New("ID de reporte no válido")
+	}
+	if s.storage == nil {
+		return "", errors.New("servicio de almacenamiento no configurado")
+	}
+
+	reporte, err := s.reporteRepo.FindByID(reporteID)
+	if err != nil {
+		return "", errors.New("reporte no encontrado")
+	}
+	if reporte.FechaCierre == nil || reporte.ArchivoFirmadoURL == "" {
+		return "", errors.New("este reporte no tiene un PDF firmado")
+	}
+
+	// Generar URL firmada (válida por 1 hora = 3600 segundos)
+	fileName := fmt.Sprintf("reporte_%d_firmado.pdf", reporteID)
+	signedURL, err := s.storage.GetSignedURL(fileName, 3600)
+	if err != nil {
+		return "", fmt.Errorf("error al generar URL de descarga: %w", err)
+	}
+
+	return signedURL, nil
+}
+
+// ReabrirReporte elimina el PDF firmado del storage y reabre el reporte
+func (s *reporteServicioService) ReabrirReporte(reporteID uint) error {
+	if reporteID == 0 {
+		return errors.New("ID de reporte no válido")
+	}
+	if s.storage == nil {
+		return errors.New("servicio de almacenamiento no configurado")
+	}
+
+	// Verificar que el reporte existe y está cerrado
+	reporte, err := s.reporteRepo.FindByID(reporteID)
+	if err != nil {
+		return errors.New("reporte no encontrado")
+	}
+	if reporte.FechaCierre == nil {
+		return errors.New("el reporte no está cerrado")
+	}
+
+	// Eliminar el archivo del storage
+	fileName := fmt.Sprintf("reporte_%d_firmado.pdf", reporteID)
+	if err := s.storage.Delete(fileName); err != nil {
+		return fmt.Errorf("error al eliminar el archivo: %w", err)
+	}
+
+	// Reabrir el reporte en la BD
+	return s.reporteRepo.ReabrirReporte(reporteID)
 }

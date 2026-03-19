@@ -23,6 +23,11 @@ type Config struct {
 	AppEnv      string
 	JWTSecret   string
 	FrontendURL string
+
+	// Supabase Storage
+	SupabaseURL        string
+	SupabaseServiceKey string
+	SupabaseBucket     string
 }
 
 // LoadConfig carga la configuración desde variables de entorno
@@ -51,6 +56,11 @@ func LoadConfig() *Config {
 		AppEnv:      getEnv("APP_ENV", "development"),
 		JWTSecret:   getEnv("JWT_SECRET", "tu_clave_secreta_jwt_super_segura"),
 		FrontendURL: getEnv("FRONTEND_URL", "http://localhost:5173"),
+
+		// Supabase Storage
+		SupabaseURL:        getEnv("SUPABASE_URL", "https://jlyuebeokvqmdmiqpdvc.supabase.co"),
+		SupabaseServiceKey: getEnv("SUPABASE_SERVICE_KEY", ""),
+		SupabaseBucket:     getEnv("SUPABASE_BUCKET", "reportes-firmados"),
 	}
 }
 

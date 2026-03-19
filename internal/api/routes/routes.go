@@ -6,6 +6,7 @@ import (
 	"tum_inv_backend/internal/domain/repositories"
 	"tum_inv_backend/internal/domain/services"
 	"tum_inv_backend/internal/infrastructure/config"
+	"tum_inv_backend/internal/infrastructure/storage"
 
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
@@ -41,7 +42,7 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB, cfg *config.Config) {
 	usuarioSistemaService := services.NewUsuarioSistemaService(usuarioSistemaRepo)
 	accesoRemotoService := services.NewAccesoRemotoService(accesoRemotoRepo)
 	backupService := services.NewBackupService(backupRepo)
-	reporteServicioService := services.NewReporteServicioService(reporteServicioRepo)
+	reporteServicioService := services.NewReporteServicioService(reporteServicioRepo, storage.NewSupabaseStorage(cfg))
 	tipoMantenimientoService := services.NewTipoMantenimientoService(tipoMantenimientoRepo)
 	repuestoService := services.NewRepuestoService(repuestoRepo)
 	authService := services.NewAuthService(usuarioRepo, cfg)
@@ -221,6 +222,9 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB, cfg *config.Config) {
 	// Rutas para generar PDF del reporte
 	reportesServicio.GET("/:id/pdf", pdfController.GenerarReportePDF)
 	reportesServicio.GET("/:id/pdf/view", pdfController.VisualizarReportePDF)
+	reportesServicio.POST("/:id/subir-firmado", reporteServicioController.SubirFirmado)
+	reportesServicio.GET("/:id/descargar-firmado", reporteServicioController.DescargarFirmado)
+	reportesServicio.POST("/:id/reabrir", reporteServicioController.ReabrirReporte)
 
 	// Ruta para obtener reportes de servicio por equipo
 	equipos.GET("/:equipoId/reportes-servicio", reporteServicioController.GetReportesServicioByEquipo)

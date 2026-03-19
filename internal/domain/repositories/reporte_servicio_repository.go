@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"time"
 	"tum_inv_backend/internal/domain/models"
 
 	"gorm.io/gorm"
@@ -15,6 +16,8 @@ type ReporteServicioRepository interface {
 	FindAll() ([]models.ReporteServicio, error)
 	FindByEquipoID(equipoID uint) ([]models.ReporteServicio, error)
 	CreateReporteCompleto(reporte *models.ReporteServicio, tipoMantenimiento *models.TipoMantenimiento, repuestos []models.Repuesto) error
+	CerrarReporte(id uint, archivoURL string) error
+	ReabrirReporte(id uint) error
 }
 
 // reporteServicioRepository implementa ReporteServicioRepository
@@ -107,4 +110,21 @@ func (r *reporteServicioRepository) CreateReporteCompleto(reporte *models.Report
 
 	// Confirmar transacción
 	return tx.Commit().Error
+}
+
+// CerrarReporte marca un reporte como cerrado con la URL del archivo firmado
+func (r *reporteServicioRepository) CerrarReporte(id uint, archivoURL string) error {
+	now := time.Now()
+	return r.db.Model(&models.ReporteServicio{}).Where("id = ?", id).Updates(map[string]interface{}{
+		"archivo_firmado_url": archivoURL,
+		"fecha_cierre":        now,
+	}).Error
+}
+
+// ReabrirReporte reabre un reporte cerrado limpiando la URL del archivo y la fecha de cierre
+func (r *reporteServicioRepository) ReabrirReporte(id uint) error {
+	return r.db.Model(&models.ReporteServicio{}).Where("id = ?", id).Updates(map[string]interface{}{
+		"archivo_firmado_url": "",
+		"fecha_cierre":        nil,
+	}).Error
 }

@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"io"
 	"net/http"
 	"strconv"
 	"tum_inv_backend/internal/domain/models"
@@ -151,16 +152,6 @@ func (c *ReporteServicioController) CrearReporteConTipo(ctx echo.Context) error 
 		})
 	}
 
-	// Validar tipo de mantenimiento: PREVENTIVO, CORRECTIVO, o vacío si Otro es true
-	tipoValido := reporteData.TipoMantenimiento.Tipo == "PREVENTIVO" || reporteData.TipoMantenimiento.Tipo == "CORRECTIVO"
-	otroValido := reporteData.TipoMantenimiento.Tipo == "" && reporteData.TipoMantenimiento.Otro
-
-	if !tipoValido && !otroValido {
-		return ctx.JSON(http.StatusBadRequest, map[string]string{
-			"error": "Debe especificar el tipo de mantenimiento (PREVENTIVO, CORRECTIVO) o marcar 'otro'",
-		})
-	}
-
 	// Validar repuestos (si existen)
 	for i, repuesto := range reporteData.Repuestos {
 		if repuesto.Cantidad <= 0 {
@@ -191,5 +182,85 @@ func (c *ReporteServicioController) CrearReporteConTipo(ctx echo.Context) error 
 	return ctx.JSON(http.StatusCreated, map[string]interface{}{
 		"message": "Reporte creado exitosamente",
 		"reporte": reporte,
+	})
+}
+
+// SubirFirmado sube un PDF firmado y cierra el reporte
+func (c *ReporteServicioController) SubirFirmado(ctx echo.Context) error {
+	id, err := strconv.ParseUint(ctx.Param("id"), 10, 32)
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{"error": "ID inválido"})
+	}
+
+	// Obtener el archivo del formulario multipart
+	file, err := ctx.FormFile("archivo")
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{"error": "Debe enviar un archivo PDF"})
+	}
+
+	// Validar que sea un PDF
+	if file.Header.Get("Content-Type") != "application/pdf" {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{"error": "El archivo debe ser un PDF"})
+	}
+
+	// Validar tamaño (máx 10MB)
+	if file.Size > 10*1024*1024 {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{"error": "El archivo no debe superar los 10MB"})
+	}
+
+	// Leer el contenido del archivo
+	src, err := file.Open()
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{"error": "Error al leer el archivo"})
+	}
+	defer src.Close()
+
+	fileData, err := io.ReadAll(src)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{"error": "Error al procesar el archivo"})
+	}
+
+	// Subir y cerrar el reporte
+	reporte, err := c.reporteService.SubirFirmado(uint(id), fileData, "application/pdf")
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	return ctx.JSON(http.StatusOK, map[string]interface{}{
+		"message": "PDF firmado subido y reporte cerrado correctamente",
+		"reporte": reporte,
+	})
+}
+
+// DescargarFirmado genera una URL temporal para descargar el PDF firmado
+func (c *ReporteServicioController) DescargarFirmado(ctx echo.Context) error {
+	id, err := strconv.ParseUint(ctx.Param("id"), 10, 32)
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{"error": "ID inválido"})
+	}
+
+	url, err := c.reporteService.ObtenerURLFirmado(uint(id))
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	return ctx.JSON(http.StatusOK, map[string]string{
+		"url": url,
+	})
+}
+
+// ReabrirReporte elimina el PDF firmado y reabre el reporte
+func (c *ReporteServicioController) ReabrirReporte(ctx echo.Context) error {
+	id, err := strconv.ParseUint(ctx.Param("id"), 10, 32)
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{"error": "ID inválido"})
+	}
+
+	if err := c.reporteService.ReabrirReporte(uint(id)); err != nil {
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	return ctx.JSON(http.StatusOK, map[string]string{
+		"message": "Reporte reabierto correctamente",
 	})
 }
