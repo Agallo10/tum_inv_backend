@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"strconv"
 	"tum_inv_backend/internal/domain/models"
 	"tum_inv_backend/internal/domain/services"
 
@@ -128,4 +129,41 @@ func (c *AuthController) GetAllUsers(ctx echo.Context) error {
 		"usuarios": usuarios,
 		"total":    len(usuarios),
 	})
+}
+
+// UpdateUser maneja la actualización de un usuario existente
+func (c *AuthController) UpdateUser(ctx echo.Context) error {
+	id, err := strconv.ParseUint(ctx.Param("id"), 10, 32)
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{"error": "ID inválido"})
+	}
+
+	req := new(models.UpdateUserRequest)
+	if err := ctx.Bind(req); err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{"error": "Datos inválidos"})
+	}
+
+	usuario, err := c.authService.UpdateUser(uint(id), *req)
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+
+	// Ocultar contraseña en la respuesta
+	usuario.Password = ""
+
+	return ctx.JSON(http.StatusOK, usuario)
+}
+
+// DeleteUser maneja la eliminación de un usuario
+func (c *AuthController) DeleteUser(ctx echo.Context) error {
+	id, err := strconv.ParseUint(ctx.Param("id"), 10, 32)
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{"error": "ID inválido"})
+	}
+
+	if err := c.authService.DeleteUser(uint(id)); err != nil {
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	return ctx.JSON(http.StatusOK, map[string]string{"mensaje": "Usuario eliminado correctamente"})
 }

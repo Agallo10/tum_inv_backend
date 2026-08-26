@@ -33,6 +33,8 @@ type AuthService interface {
 	RefreshToken(refreshToken string) (*models.TokenResponse, error)
 	GetUserByID(id uint) (*models.Usuario, error)
 	GetAllUsers() ([]models.Usuario, error)
+	UpdateUser(id uint, req models.UpdateUserRequest) (*models.Usuario, error)
+	DeleteUser(id uint) error
 }
 
 // authService implementa AuthService
@@ -220,6 +222,83 @@ func (s *authService) GetAllUsers() ([]models.Usuario, error) {
 	}
 
 	return usuarios, nil
+}
+
+// UpdateUser actualiza los datos de un usuario existente
+func (s *authService) UpdateUser(id uint, req models.UpdateUserRequest) (*models.Usuario, error) {
+	// Obtener el usuario existente
+	usuario, err := s.usuarioRepo.FindByID(id)
+	if err != nil {
+		return nil, errors.New("usuario no encontrado")
+	}
+
+	// Verificar si el nombre de usuario ya está en uso por otro usuario
+	if req.Username != "" && req.Username != usuario.Username {
+		existing, err := s.usuarioRepo.FindByUsername(req.Username)
+		if err == nil && existing != nil && existing.ID != id {
+			return nil, errors.New("el nombre de usuario ya está en uso")
+		}
+	}
+
+	// Verificar si el correo ya está en uso por otro usuario
+	if req.Email != "" && req.Email != usuario.Email {
+		existing, err := s.usuarioRepo.FindByEmail(req.Email)
+		if err == nil && existing != nil && existing.ID != id {
+			return nil, errors.New("el correo electrónico ya está en uso")
+		}
+	}
+
+	// Actualizar solo los campos proporcionados
+	if req.Nombre != "" {
+		usuario.Nombre = req.Nombre
+	}
+	if req.Apellido != "" {
+		usuario.Apellido = req.Apellido
+	}
+	if req.Cedula != "" {
+		usuario.Cedula = req.Cedula
+	}
+	if req.Email != "" {
+		usuario.Email = req.Email
+	}
+	if req.Username != "" {
+		usuario.Username = req.Username
+	}
+	if req.Rol != "" {
+		usuario.Rol = req.Rol
+	}
+
+	// Si se proporciona una nueva contraseña, hashearla
+	if req.Password != "" {
+		usuario.Password = req.Password
+		if err := usuario.HashPassword(); err != nil {
+			return nil, err
+		}
+	}
+
+	// Guardar cambios
+	if err := s.usuarioRepo.Update(usuario); err != nil {
+		return nil, err
+	}
+
+	// Ocultar contraseña en la respuesta
+	usuario.Password = ""
+
+	return usuario, nil
+}
+
+// DeleteUser elimina un usuario del sistema por su ID
+func (s *authService) DeleteUser(id uint) error {
+	if id == 0 {
+		return errors.New("ID de usuario no válido")
+	}
+
+	// Verificar que el usuario exista
+	if _, err := s.usuarioRepo.FindByID(id); err != nil {
+		return errors.New("usuario no encontrado")
+	}
+
+	return s.usuarioRepo.Delete(id)
 }
 
 // generateAccessToken genera un token de acceso JWT

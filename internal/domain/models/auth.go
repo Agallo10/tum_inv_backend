@@ -54,6 +54,17 @@ type RegisterRequest struct {
 	Rol      string `json:"rol" validate:"omitempty,oneof=admin usuario tecnico"`
 }
 
+// UpdateUserRequest representa los datos editables de un usuario
+type UpdateUserRequest struct {
+	Nombre   string `json:"nombre"`
+	Apellido string `json:"apellido"`
+	Cedula   string `json:"cedula"`
+	Email    string `json:"email"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Rol      string `json:"rol"`
+}
+
 // TokenResponse representa la respuesta con el token JWT
 type TokenResponse struct {
 	Token        string    `json:"token"`

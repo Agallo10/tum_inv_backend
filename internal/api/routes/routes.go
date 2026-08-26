@@ -102,6 +102,10 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB, cfg *config.Config) {
 	auth.GET("/profile", authController.GetProfile, jwtMiddleware.Authenticate)
 	// Ruta protegida para obtener todos los usuarios (solo admin)
 	auth.GET("/users", authController.GetAllUsers, jwtMiddleware.Authenticate)
+	// Ruta protegida para actualizar un usuario
+	auth.PUT("/users/:id", authController.UpdateUser, jwtMiddleware.Authenticate)
+	// Ruta protegida para eliminar un usuario
+	auth.DELETE("/users/:id", authController.DeleteUser, jwtMiddleware.Authenticate)
 
 	// Rutas para Equipos
 	equipos := api.Group("/equipos")
